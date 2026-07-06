@@ -1,0 +1,291 @@
+// Prisma Schema for REX OS Backend
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// BEATS
+// ============================================================
+model Beat {
+  id            String   @id
+  name          String
+  genre         String
+  mood          String
+  bpm           Int
+  key           String
+  duration      String
+  videoTheme    String
+  status        String   @default("In Progress") // Published | Ready | In Progress | Archived
+  mixStatus     String   @default("Not Started")
+  masterStatus  String   @default("Not Started")
+  videoStatus   String   @default("Not Started")
+  // Platform booleans stored as individual columns
+  platYoutube   Boolean  @default(false)
+  platSpotify   Boolean  @default(false)
+  platBeatstars Boolean  @default(false)
+  platAirbit    Boolean  @default(false)
+  tags          String   @default("[]") // JSON array stored as string
+  notes         String   @default("")
+  dateCreated   String
+
+  publishingCards PublishingCard[]
+  assets          Asset[]
+  calendarEvents  CalendarEvent[]
+}
+
+// ============================================================
+// PROJECTS
+// ============================================================
+model Project {
+  id             Int           @id @default(autoincrement())
+  name           String
+  description    String
+  progress       Int           @default(0)
+  status         String        @default("Active")
+  statusColor    String        @default("text-emerald-500 bg-emerald-500/10")
+  priority       String        @default("Medium")
+  priorityColor  String        @default("text-yellow-600 bg-yellow-500/10")
+  deadline       String
+  recentActivity String        @default("Project created")
+  notes          String        @default("")
+  timeInvested   Float         @default(0)
+  health         String        @default("On Track")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tasks      ProjectTask[]
+  milestones Milestone[]
+  assets     Asset[]
+}
+
+model ProjectTask {
+  id         Int     @id @default(autoincrement())
+  text       String
+  completed  Boolean @default(false)
+  priority   String  @default("Medium")
+  dueDate    String?
+  projectId  Int
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Milestone {
+  id        Int     @id @default(autoincrement())
+  text      String
+  completed Boolean @default(false)
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// PUBLISHING
+// ============================================================
+model PublishingCard {
+  id          Int     @id @default(autoincrement())
+  columnId    String
+  title       String
+  platform    String
+  priority    String
+  publishDate String
+  estTime     String
+  status      String
+  beatId      String?
+  beat        Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
+}
+
+// ============================================================
+// GOALS
+// ============================================================
+model AnnualGoal {
+  id               Int              @id @default(autoincrement())
+  title            String
+  targetDate       String
+  progress         Int              @default(0)
+  status           String           @default("On Track")
+  quarterlyGoals   QuarterlyGoal[]
+}
+
+model QuarterlyGoal {
+  id             Int          @id @default(autoincrement())
+  title          String
+  targetDate     String
+  progress       Int          @default(0)
+  status         String       @default("On Track")
+  annualGoalId   Int?
+  annualGoal     AnnualGoal?  @relation(fields: [annualGoalId], references: [id], onDelete: SetNull)
+  monthlyGoals   MonthlyGoal[]
+}
+
+model MonthlyGoal {
+  id               Int            @id @default(autoincrement())
+  title            String
+  progress         Int            @default(0)
+  current          Int            @default(0)
+  total            Int            @default(1)
+  unit             String
+  type             String         @default("monthly")
+  category         String
+  quarterlyGoalId  Int?
+  quarterlyGoal    QuarterlyGoal? @relation(fields: [quarterlyGoalId], references: [id], onDelete: SetNull)
+}
+
+// ============================================================
+// ACTION ITEMS
+// ============================================================
+model ActionItem {
+  id               Int     @id @default(autoincrement())
+  text             String
+  completed        Boolean @default(false)
+  priority         String  @default("Medium")
+  estimatedMinutes Int?
+  project          String?
+  energy           String?
+  sortOrder        Int     @default(0)
+}
+
+// ============================================================
+// WEEKLY REVIEW
+// ============================================================
+model WeeklyReview {
+  id                  Int    @id @default(autoincrement())
+  score               Float  @default(0)
+  scoreTrend          String @default("")
+  biggestWin          String @default("")
+  biggestMistake      String @default("")
+  lessonsLearned      String @default("")
+  goalsNextWeek       String @default("")
+  weeklyNotes         String @default("")
+  doomscrollingHours  Float  @default(0)
+  synthTweakingHours  Float  @default(0)
+  videosPublished     Int    @default(0)
+  beatsFinished       Int    @default(0)
+  tasksCompleted      Int    @default(0)
+  focusHours          Float  @default(0)
+  publishingStreak    Int    @default(0)
+}
+
+// ============================================================
+// MISSION CONTROL
+// ============================================================
+model MissionControl {
+  id               Int    @id @default(autoincrement())
+  oneImportantTask String @default("")
+  notes            String @default("")
+}
+
+model SecondaryTask {
+  id               Int     @id @default(autoincrement())
+  text             String
+  completed        Boolean @default(false)
+  priority         String  @default("Medium")
+  estimatedMinutes Int?
+  project          String?
+  sortOrder        Int     @default(0)
+}
+
+// ============================================================
+// ACTIVITY LOG
+// ============================================================
+model ActivityLog {
+  id          Int    @id @default(autoincrement())
+  timestamp   String
+  type        String
+  title       String
+  description String
+  icon        String @default("check")
+  color       String @default("text-emerald-500 bg-emerald-500/10")
+}
+
+// ============================================================
+// DAILY LOG
+// ============================================================
+model DailyLog {
+  id         Int    @id @default(autoincrement())
+  date       String
+  category   String
+  task       String
+  output     String
+  timeSpent  Int    @default(0) // minutes
+  status     String @default("In Progress")
+  notes      String @default("")
+  nextAction String @default("")
+}
+
+// ============================================================
+// KNOWLEDGE VAULT
+// ============================================================
+model KnowledgeEntry {
+  id         Int     @id @default(autoincrement())
+  title      String
+  category   String
+  content    String
+  tags       String  @default("[]") // JSON array
+  url        String?
+  dateAdded  String
+  isFavorite Boolean @default(false)
+}
+
+// ============================================================
+// ASSETS
+// ============================================================
+model Asset {
+  id        Int     @id @default(autoincrement())
+  name      String
+  type      String
+  size      String
+  format    String
+  beatId    String?
+  beat      Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
+  projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tags      String  @default("[]") // JSON array
+  dateAdded String
+  notes     String  @default("")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+model Notification {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  type        String  @default("info") // warning | info | success | urgent
+  isRead      Boolean @default(false)
+  timestamp   String
+  link        String?
+}
+
+// ============================================================
+// CALENDAR EVENTS
+// ============================================================
+model CalendarEvent {
+  id          Int     @id @default(autoincrement())
+  title       String
+  date        String
+  platform    String
+  color       String  @default("#ef4444")
+  isRecurring Boolean @default(false)
+  status      String  @default("scheduled")
+  beatId      String?
+  beat        Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
+}
+
+// ============================================================
+// APP SETTINGS (single row, id=1)
+// ============================================================
+model AppSettings {
+  id                     Int     @id @default(autoincrement())
+  theme                  String  @default("system")
+  defaultFocusMinutes    Int     @default(25)
+  defaultBreakMinutes    Int     @default(5)
+  defaultUploadPlatforms String  @default("[\"youtube\",\"beatstars\"]") // JSON array
+  notificationsEnabled   Boolean @default(true)
+  publishingStreakGoal   Int     @default(7)
+}

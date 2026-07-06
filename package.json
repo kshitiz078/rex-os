@@ -1,0 +1,17 @@
+{
+  "name": "rex-os-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix rex-os\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix rex-os",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "db:seed": "npm run db:seed --prefix backend",
+    "db:studio": "npm run db:studio --prefix backend",
+    "db:reset": "npm run db:reset --prefix backend",
+    "setup": "npm install --prefix backend && npm install --prefix rex-os && npm run db:migrate && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
