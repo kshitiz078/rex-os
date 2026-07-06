@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: rex-os-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        value: file:/data/prod.db
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1
