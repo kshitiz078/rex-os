@@ -117,6 +117,110 @@ export async function syncSheetsData(spreadsheetId: string, data: SheetSyncData)
   return { success: true };
 }
 
+// ── IMPORT: Google Sheets → REX OS ─────────────────────────────────────────
+export interface SheetImportResult {
+  beats: any[];
+  projects: any[];
+  actionItems: any[];
+  dailyLogs: any[];
+}
+
+export async function importFromSheets(spreadsheetId: string): Promise<SheetImportResult> {
+  const auth = getGoogleAuth();
+  if (!auth) throw new Error("Google authentication failed");
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const result: SheetImportResult = { beats: [], projects: [], actionItems: [], dailyLogs: [] };
+
+  // Helper: read a sheet tab and return rows (skipping header row)
+  async function readSheet(title: string): Promise<string[][]> {
+    try {
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${title}!A2:Z1000`, // Skip header row
+      });
+      return (res.data.values as string[][]) || [];
+    } catch {
+      return []; // Sheet tab might not exist yet
+    }
+  }
+
+  // ── Beats ────────────────────────────────────────────────────────────────
+  // Headers: ID, Name, Genre, Mood, BPM, Key, Duration, Status, Mix Status, Master Status, Video Status, Notes, Date Created
+  const beatRows = await readSheet("Beats");
+  result.beats = beatRows
+    .filter(r => r[1]) // must have a name
+    .map(r => ({
+      id: r[0] ? Number(r[0]) : undefined,
+      name: r[1] || "",
+      genre: r[2] || "",
+      mood: r[3] || "",
+      bpm: r[4] ? Number(r[4]) : null,
+      key: r[5] || "",
+      duration: r[6] || "",
+      status: r[7] || "idea",
+      mixStatus: r[8] || "unmixed",
+      masterStatus: r[9] || "unmastered",
+      videoStatus: r[10] || "no-video",
+      notes: r[11] || "",
+      dateCreated: r[12] || new Date().toISOString().split("T")[0],
+    }));
+
+  // ── Projects ─────────────────────────────────────────────────────────────
+  // Headers: ID, Name, Description, Progress, Status, Priority, Deadline, Health, Time Invested, Recent Activity, Notes
+  const projectRows = await readSheet("Projects");
+  result.projects = projectRows
+    .filter(r => r[1])
+    .map(r => ({
+      id: r[0] ? Number(r[0]) : undefined,
+      name: r[1] || "",
+      description: r[2] || "",
+      progress: r[3] ? Number(r[3]) : 0,
+      status: r[4] || "active",
+      priority: r[5] || "medium",
+      deadline: r[6] || null,
+      health: r[7] || "on-track",
+      timeInvested: r[8] ? Number(r[8]) : 0,
+      recentActivity: r[9] || "",
+      notes: r[10] || "",
+    }));
+
+  // ── Action Items ──────────────────────────────────────────────────────────
+  // Headers: ID, Text, Completed, Priority, Estimated Minutes, Project, Energy
+  const actionRows = await readSheet("Action Items");
+  result.actionItems = actionRows
+    .filter(r => r[1])
+    .map(r => ({
+      id: r[0] ? Number(r[0]) : undefined,
+      text: r[1] || "",
+      completed: r[2]?.toLowerCase() === "yes",
+      priority: r[3] || "medium",
+      estimatedMinutes: r[4] ? Number(r[4]) : null,
+      project: r[5] || null,
+      energy: r[6] || null,
+    }));
+
+  // ── Daily Logs ────────────────────────────────────────────────────────────
+  // Headers: ID, Date, Category, Task, Output, Time Spent, Status, Notes, Next Action
+  const logRows = await readSheet("Daily Logs");
+  result.dailyLogs = logRows
+    .filter(r => r[1])
+    .map(r => ({
+      id: r[0] ? Number(r[0]) : undefined,
+      date: r[1] || new Date().toISOString().split("T")[0],
+      category: r[2] || "general",
+      task: r[3] || "",
+      output: r[4] || "",
+      timeSpent: r[5] ? Number(r[5]) : 0,
+      status: r[6] || "in-progress",
+      notes: r[7] || "",
+      nextAction: r[8] || "",
+    }));
+
+  return result;
+}
+
 // ============================================================
 // GOOGLE CALENDAR
 // ============================================================

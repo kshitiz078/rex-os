@@ -172,6 +172,9 @@ export const updateSettings = (data: unknown) =>
 export const syncSheets = () =>
   request<{ success: boolean; message: string }>("/google/sheets/sync", { method: "POST" });
 
+export const importFromSheets = () =>
+  request<{ success: boolean; message: string; imported: Record<string, number> }>("/google/sheets/import", { method: "POST" });
+
 export const syncCalendar = () =>
   request<{ success: boolean; message: string }>("/google/calendar/sync", { method: "POST" });
 

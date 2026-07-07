@@ -229,39 +229,54 @@ export default function Settings() {
             </button>
           </div>
 
-          <div className="pt-4 border-t border-border/50 grid grid-cols-3 gap-3">
-            <button
-              onClick={async () => {
-                const res = await api.syncSheets();
-                if (res?.success) alert("Google Sheets sync completed successfully!");
-                else alert("Sync failed. Check spreadsheet share settings.");
-              }}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Sync Sheets
-            </button>
-
-            <button
-              onClick={async () => {
-                const res = await api.syncCalendar();
-                if (res?.success) alert("Google Calendar sync completed successfully!");
-                else alert("Sync failed. Check calendar share permissions.");
-              }}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Sync Calendar
-            </button>
-
-            <button
-              onClick={async () => {
-                const res = await api.syncTasks();
-                if (res?.success) alert("Google Tasks sync completed successfully!");
-                else alert("Sync failed. Check Google Tasks connection.");
-              }}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Sync Tasks
-            </button>
+          <div className="pt-4 border-t border-border/50 space-y-3">
+            {/* Row 1: Sheets */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={async () => {
+                  const res = await api.syncSheets();
+                  if (res?.success) alert("✅ " + res.message);
+                  else alert("Sync failed. Check spreadsheet share settings.");
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Sync Sheets →
+              </button>
+              <button
+                onClick={async () => {
+                  if (!window.confirm("This will import data from Google Sheets into REX OS (adds/updates records). Continue?")) return;
+                  const res = await api.importFromSheets();
+                  if (res?.success) alert("✅ " + res.message);
+                  else alert("Import failed. Make sure your sheet has the correct column headers.");
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors border border-emerald-500/30"
+              >
+                <Cloud className="w-3.5 h-3.5" /> ← Import Sheets
+              </button>
+            </div>
+            {/* Row 2: Calendar + Tasks */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={async () => {
+                  const res = await api.syncCalendar();
+                  if (res?.success) alert("✅ Google Calendar sync completed successfully!");
+                  else alert("Sync failed. Check calendar share permissions.");
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Sync Calendar
+              </button>
+              <button
+                onClick={async () => {
+                  const res = await api.syncTasks();
+                  if (res?.success) alert("✅ Google Tasks sync completed successfully!");
+                  else alert("Sync failed. Check Google Tasks connection.");
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Sync Tasks
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

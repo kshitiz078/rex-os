@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "../db";
 import {
   syncSheetsData,
+  importFromSheets,
   syncEventToGoogleCalendar,
   exportDocToGoogleDocs,
   syncTasksToGoogleTasks
@@ -36,6 +37,94 @@ router.post("/sheets/sync", async (_req, res) => {
   } catch (err: any) {
     console.error("❌ Google Sheets Sync Endpoint error:", err.message);
     res.status(500).json({ error: "Google Sheets Sync failed", message: err.message });
+  }
+});
+
+// POST /api/google/sheets/import  (Google Sheets → REX OS database)
+router.post("/sheets/import", async (_req, res) => {
+  try {
+    const settings = await prisma.appSettings.findFirst();
+    const sheetId = settings?.googleSheetId || process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+
+    if (!sheetId) {
+      return res.status(400).json({ error: "Google Spreadsheet ID is not configured." });
+    }
+
+    const data = await importFromSheets(sheetId);
+    let imported = { beats: 0, projects: 0, actionItems: 0, dailyLogs: 0 };
+
+    // Upsert Beats
+    for (const beat of data.beats) {
+      if (beat.id) {
+        const exists = await prisma.beat.findUnique({ where: { id: beat.id } });
+        if (exists) {
+          await prisma.beat.update({ where: { id: beat.id }, data: beat });
+        } else {
+          await prisma.beat.create({ data: beat });
+        }
+      } else {
+        const { id: _id, ...beatData } = beat;
+        await prisma.beat.create({ data: beatData });
+      }
+      imported.beats++;
+    }
+
+    // Upsert Projects
+    for (const project of data.projects) {
+      if (project.id) {
+        const exists = await prisma.project.findUnique({ where: { id: project.id } });
+        if (exists) {
+          await prisma.project.update({ where: { id: project.id }, data: project });
+        } else {
+          await prisma.project.create({ data: project });
+        }
+      } else {
+        const { id: _id, ...projectData } = project;
+        await prisma.project.create({ data: projectData });
+      }
+      imported.projects++;
+    }
+
+    // Upsert Action Items
+    for (const item of data.actionItems) {
+      if (item.id) {
+        const exists = await prisma.actionItem.findUnique({ where: { id: item.id } });
+        if (exists) {
+          await prisma.actionItem.update({ where: { id: item.id }, data: item });
+        } else {
+          await prisma.actionItem.create({ data: item });
+        }
+      } else {
+        const { id: _id, ...itemData } = item;
+        await prisma.actionItem.create({ data: itemData });
+      }
+      imported.actionItems++;
+    }
+
+    // Upsert Daily Logs
+    for (const log of data.dailyLogs) {
+      if (log.id) {
+        const exists = await prisma.dailyLog.findUnique({ where: { id: log.id } });
+        if (exists) {
+          await prisma.dailyLog.update({ where: { id: log.id }, data: log });
+        } else {
+          await prisma.dailyLog.create({ data: log });
+        }
+      } else {
+        const { id: _id, ...logData } = log;
+        await prisma.dailyLog.create({ data: logData });
+      }
+      imported.dailyLogs++;
+    }
+
+    res.json({
+      success: true,
+      message: `Import complete! Beats: ${imported.beats}, Projects: ${imported.projects}, Action Items: ${imported.actionItems}, Daily Logs: ${imported.dailyLogs}`,
+      imported
+    });
+  } catch (err: any) {
+    console.error("❌ Google Sheets Import Endpoint error:", err.message);
+    res.status(500).json({ error: "Google Sheets Import failed", message: err.message });
   }
 });
 
