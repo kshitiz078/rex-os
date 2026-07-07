@@ -4,7 +4,7 @@
  * Falls back gracefully when the server is unreachable.
  */
 
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5001/api";
+const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:5001/api" : "/api");
 
 // ─── Connection state (exported so TopNav can show a badge) ───────────────────
 let _backendOnline = false;
