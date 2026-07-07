@@ -7,10 +7,6 @@ services:
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
-        value: file:/data/prod.db
+        sync: false # Tells Render you will set this manually in the dashboard
       - key: NODE_ENV
         value: production
-    disk:
-      name: sqlite-data
-      mountPath: /data
-      sizeGB: 1
