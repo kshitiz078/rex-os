@@ -1,6 +1,7 @@
 services:
   - type: web
     name: rex-os-backend
+    plan: free
     env: node
     rootDir: backend
     buildCommand: npm install && npm run build && npx prisma generate && npx prisma migrate deploy
