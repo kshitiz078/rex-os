@@ -63,10 +63,12 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // ── Start ───────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀 REX OS API running on http://localhost:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/status`);
-  console.log(`   Beats:  http://localhost:${PORT}/api/beats\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 REX OS API running on http://localhost:${PORT}`);
+    console.log(`   Health: http://localhost:${PORT}/api/status`);
+    console.log(`   Beats:  http://localhost:${PORT}/api/beats\n`);
+  });
+}
 
 export default app;

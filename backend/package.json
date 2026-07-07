@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "ts-node src/seed.ts",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset --force && ts-node src/seed.ts"
+    "db:reset": "prisma migrate reset --force && ts-node src/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
