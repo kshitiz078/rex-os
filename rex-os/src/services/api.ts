@@ -167,3 +167,16 @@ export const deleteCalendarEvent = (id: number) =>
 export const getSettings = () => request<unknown>("/settings");
 export const updateSettings = (data: unknown) =>
   request<unknown>("/settings", { method: "PUT", body: JSON.stringify(data) });
+
+// ─── Google Integrations ──────────────────────────────────────────────────────
+export const syncSheets = () =>
+  request<{ success: boolean; message: string }>("/google/sheets/sync", { method: "POST" });
+
+export const syncCalendar = () =>
+  request<{ success: boolean; message: string }>("/google/calendar/sync", { method: "POST" });
+
+export const syncTasks = () =>
+  request<{ success: boolean; message: string }>("/google/tasks/sync", { method: "POST" });
+
+export const exportToGoogleDoc = (id: number) =>
+  request<{ success: boolean; url: string }>(`/google/docs/export/${id}`, { method: "POST" });

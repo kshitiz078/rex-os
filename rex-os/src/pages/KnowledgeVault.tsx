@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Plus, X, Star, Search, ExternalLink, Trash2, Edit3 } from "lucide-react";
+import { BookOpen, Plus, X, Star, Search, ExternalLink, Trash2, Edit3, FileText } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { KnowledgeEntry } from "../context/AppContext";
+import * as api from "../services/api";
 
 const CATEGORIES: KnowledgeEntry["category"][] = ["Idea", "Inspiration", "Lyrics", "Business", "Marketing", "Link", "Reference"];
 
@@ -187,7 +188,25 @@ export default function KnowledgeVault() {
                     )}
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-muted-foreground">{entry.dateAdded}</span>
-                      <div className="ml-auto flex items-center gap-1">
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <button
+                          onClick={async e => {
+                            e.stopPropagation();
+                            if (window.confirm("Export this entry to Google Docs?")) {
+                              const res = await api.exportToGoogleDoc(entry.id);
+                              if (res?.url) {
+                                alert("Exported to Google Docs successfully!");
+                                window.location.reload();
+                              } else {
+                                alert("Export failed. Make sure User Gmail is configured in Settings.");
+                              }
+                            }
+                          }}
+                          className="p-1 hover:text-emerald-500 text-muted-foreground rounded-md transition-colors"
+                          title="Export to Google Doc"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={e => { e.stopPropagation(); openEditModal(entry); }} className="p-1 hover:text-primary text-muted-foreground rounded-md transition-colors">
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>

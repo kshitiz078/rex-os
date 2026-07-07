@@ -148,6 +148,7 @@ model ActionItem {
   project          String?
   energy           String?
   sortOrder        Int     @default(0)
+  googleTaskId     String?
 }
 
 // ============================================================
@@ -188,6 +189,7 @@ model SecondaryTask {
   estimatedMinutes Int?
   project          String?
   sortOrder        Int     @default(0)
+  googleTaskId     String?
 }
 
 // ============================================================
@@ -267,15 +269,16 @@ model Notification {
 // CALENDAR EVENTS
 // ============================================================
 model CalendarEvent {
-  id          Int     @id @default(autoincrement())
-  title       String
-  date        String
-  platform    String
-  color       String  @default("#ef4444")
-  isRecurring Boolean @default(false)
-  status      String  @default("scheduled")
-  beatId      String?
-  beat        Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
+  id            Int     @id @default(autoincrement())
+  title         String
+  date          String
+  platform      String
+  color         String  @default("#ef4444")
+  isRecurring   Boolean @default(false)
+  status        String  @default("scheduled")
+  beatId        String?
+  beat          Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
+  googleEventId String?
 }
 
 // ============================================================
@@ -289,4 +292,8 @@ model AppSettings {
   defaultUploadPlatforms String  @default("[\"youtube\",\"beatstars\"]") // JSON array
   notificationsEnabled   Boolean @default(true)
   publishingStreakGoal   Int     @default(7)
+  googleSheetId          String  @default("1cdwRV433KKaJ-PCY4lCCsQzazZrqCJfdsbgBlMJtqaY")
+  googleCalendarId       String  @default("")
+  userGmailAddress       String  @default("")
+  googleSyncEnabled      Boolean @default(false)
 }

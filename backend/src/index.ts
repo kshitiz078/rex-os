@@ -17,6 +17,7 @@ import assetsRouter from "./routes/assets";
 import notificationsRouter from "./routes/notifications";
 import calendarRouter from "./routes/calendar";
 import settingsRouter from "./routes/settings";
+import googleRouter from "./routes/google";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -50,6 +51,7 @@ app.use("/api/assets", assetsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/calendar", calendarRouter);
 app.use("/api/settings", settingsRouter);
+app.use("/api/google", googleRouter);
 
 // ── 404 catch-all ───────────────────────────────────────────
 app.use((_req, res) => {

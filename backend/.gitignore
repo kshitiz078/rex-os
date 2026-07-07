@@ -5,3 +5,5 @@ dev.db
 dev.db-journal
 *.db-shm
 *.db-wal
+.vercel
+.env*

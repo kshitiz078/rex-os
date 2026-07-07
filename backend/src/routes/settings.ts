@@ -14,7 +14,18 @@ router.get("/", async (_req, res) => {
 
 // PUT /api/settings
 router.put("/", async (req, res) => {
-  const { theme, defaultFocusMinutes, defaultBreakMinutes, defaultUploadPlatforms, notificationsEnabled, publishingStreakGoal } = req.body;
+  const {
+    theme,
+    defaultFocusMinutes,
+    defaultBreakMinutes,
+    defaultUploadPlatforms,
+    notificationsEnabled,
+    publishingStreakGoal,
+    googleSheetId,
+    googleCalendarId,
+    userGmailAddress,
+    googleSyncEnabled
+  } = req.body;
   const existing = await prisma.appSettings.findFirst();
   const data = {
     theme,
@@ -23,6 +34,10 @@ router.put("/", async (req, res) => {
     defaultUploadPlatforms: JSON.stringify(defaultUploadPlatforms || []),
     notificationsEnabled: !!notificationsEnabled,
     publishingStreakGoal: Number(publishingStreakGoal),
+    googleSheetId: googleSheetId !== undefined ? String(googleSheetId) : undefined,
+    googleCalendarId: googleCalendarId !== undefined ? String(googleCalendarId) : undefined,
+    userGmailAddress: userGmailAddress !== undefined ? String(userGmailAddress) : undefined,
+    googleSyncEnabled: googleSyncEnabled !== undefined ? !!googleSyncEnabled : undefined,
   };
   const settings = existing
     ? await prisma.appSettings.update({ where: { id: existing.id }, data })

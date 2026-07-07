@@ -203,6 +203,10 @@ export interface AppSettings {
   defaultUploadPlatforms: string[];
   notificationsEnabled: boolean;
   publishingStreakGoal: number;
+  googleSheetId: string;
+  googleCalendarId: string;
+  userGmailAddress: string;
+  googleSyncEnabled: boolean;
 }
 
 // ============================================================
@@ -485,6 +489,10 @@ const initialSettings: AppSettings = {
   defaultUploadPlatforms: ['youtube', 'beatstars'],
   notificationsEnabled: true,
   publishingStreakGoal: 7,
+  googleSheetId: '1cdwRV433KKaJ-PCY4lCCsQzazZrqCJfdsbgBlMJtqaY',
+  googleCalendarId: '',
+  userGmailAddress: '',
+  googleSyncEnabled: false,
 };
 
 // ============================================================
