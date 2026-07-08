@@ -21,13 +21,19 @@ async function request<T>(
     });
     if (!res.ok) {
       console.warn(`[API] ${options.method ?? "GET"} ${path} → ${res.status}`);
-      return null;
+      try {
+        const errJson = await res.json();
+        return { success: false, error: errJson.error || res.statusText, message: errJson.message } as any;
+      } catch {
+        return { success: false, error: `HTTP ${res.status}`, message: res.statusText } as any;
+      }
     }
     _backendOnline = true;
     return res.json() as Promise<T>;
-  } catch {
+  } catch (e: any) {
     _backendOnline = false;
-    return null;
+    console.error(`[API] Connection error to ${BASE}${path}`, e);
+    return { success: false, error: "Network Error", message: e?.message || "Failed to reach backend API" } as any;
   }
 }
 
