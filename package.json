@@ -1,6 +1,10 @@
 {
   "name": "rex-os-workspace",
   "private": true,
+  "workspaces": [
+    "backend",
+    "rex-os"
+  ],
   "scripts": {
     "dev": "concurrently -n \"backend,frontend\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix rex-os\"",
     "backend": "npm run dev --prefix backend",
