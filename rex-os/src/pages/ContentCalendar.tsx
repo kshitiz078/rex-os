@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Cloud } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
-import * as api from "../services/api";
 
 export default function ContentCalendar() {
   const { calendarEvents, addCalendarEvent, deleteCalendarEvent } = useAppContext();
@@ -62,16 +61,6 @@ export default function ContentCalendar() {
           <p className="text-muted-foreground mt-1 text-lg font-medium">Schedule and track your content drops.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              const res = await api.syncCalendar();
-              if (res?.success) alert("Google Calendar synced successfully!");
-              else alert("Sync failed. Configure Google Calendar ID in Settings first.");
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl font-bold text-sm transition-colors border border-blue-500/20"
-          >
-            <Cloud className="w-4 h-4" /> Sync to Google Calendar
-          </button>
           <div className="flex items-center gap-2 bg-secondary/50 p-1.5 rounded-xl border border-border">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronLeft className="w-5 h-5" /></button>
             <button onClick={handleToday} className="px-4 py-1.5 font-bold text-sm hover:bg-secondary rounded-lg transition-colors">Today</button>

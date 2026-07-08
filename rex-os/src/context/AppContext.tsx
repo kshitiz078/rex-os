@@ -207,6 +207,9 @@ export interface AppSettings {
   googleCalendarId: string;
   userGmailAddress: string;
   googleSyncEnabled: boolean;
+  lastBackupAt?: string | null;
+  backupStatus?: string;
+  backupError?: string;
 }
 
 // ============================================================
@@ -493,6 +496,9 @@ const initialSettings: AppSettings = {
   googleCalendarId: '',
   userGmailAddress: '',
   googleSyncEnabled: false,
+  lastBackupAt: null,
+  backupStatus: 'never',
+  backupError: '',
 };
 
 // ============================================================

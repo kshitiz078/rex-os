@@ -24,7 +24,10 @@ router.put("/", async (req, res) => {
     googleSheetId,
     googleCalendarId,
     userGmailAddress,
-    googleSyncEnabled
+    googleSyncEnabled,
+    lastBackupAt,
+    backupStatus,
+    backupError
   } = req.body;
   const existing = await prisma.appSettings.findFirst();
   const data = {
@@ -38,6 +41,9 @@ router.put("/", async (req, res) => {
     googleCalendarId: googleCalendarId !== undefined ? String(googleCalendarId) : undefined,
     userGmailAddress: userGmailAddress !== undefined ? String(userGmailAddress) : undefined,
     googleSyncEnabled: googleSyncEnabled !== undefined ? !!googleSyncEnabled : undefined,
+    lastBackupAt: lastBackupAt !== undefined && lastBackupAt !== null ? String(lastBackupAt) : undefined,
+    backupStatus: backupStatus !== undefined ? String(backupStatus) : undefined,
+    backupError: backupError !== undefined ? String(backupError) : undefined,
   };
   const settings = existing
     ? await prisma.appSettings.update({ where: { id: existing.id }, data })

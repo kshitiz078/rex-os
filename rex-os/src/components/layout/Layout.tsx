@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, Rocket, FolderKanban, Music, UploadCloud, Calendar, BarChart2, PieChart, Settings } from "lucide-react";
 
-export default function Layout() {
+export default function Layout({ onLogout }: { onLogout?: () => void }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -28,7 +28,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden text-foreground">
-      <Sidebar />
+      <Sidebar onLogout={onLogout} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopNav />
         <main className="flex-1 overflow-y-auto p-8 bg-background/50">

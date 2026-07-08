@@ -296,4 +296,7 @@ model AppSettings {
   googleCalendarId       String  @default("")
   userGmailAddress       String  @default("")
   googleSyncEnabled      Boolean @default(false)
+  lastBackupAt           String?
+  backupStatus           String  @default("never")
+  backupError            String  @default("")
 }

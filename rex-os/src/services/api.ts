@@ -10,14 +10,25 @@ const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://loca
 let _backendOnline = false;
 export const isBackendOnline = () => _backendOnline;
 
+// ─── Auth token helpers ────────────────────────────────────────────────────
+const TOKEN_KEY = "rex_jwt";
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T | null> {
+  const token = getToken();
+  const headers = new Headers(options.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
   try {
     const res = await fetch(`${BASE}${path}`, {
       ...options,
-      headers: { "Content-Type": "application/json", ...(options.headers ?? {}) },
+      headers,
     });
     if (!res.ok) {
       console.warn(`[API] ${options.method ?? "GET"} ${path} → ${res.status}`);
@@ -36,6 +47,13 @@ async function request<T>(
     return { success: false, error: "Network Error", message: e?.message || "Failed to reach backend API" } as any;
   }
 }
+
+// ─── Auth ──────────────────────────────────────────────────────────────────────────
+export const loginApi = (password: string) =>
+  request<{ success: boolean; token: string }>("/auth/login", { method: "POST", body: JSON.stringify({ password }) });
+
+export const verifyToken = (token: string) =>
+  request<{ valid: boolean }>("/auth/verify", { method: "POST", body: JSON.stringify({ token }) });
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 export const checkStatus = () =>
@@ -174,12 +192,17 @@ export const getSettings = () => request<unknown>("/settings");
 export const updateSettings = (data: unknown) =>
   request<unknown>("/settings", { method: "PUT", body: JSON.stringify(data) });
 
-// ─── Google Integrations ──────────────────────────────────────────────────────
-export const syncSheets = () =>
-  request<{ success: boolean; message: string }>("/google/sheets/sync", { method: "POST" });
+// ─── Google Backup ───────────────────────────────────────────────────────────
+export const getBackupStatus = () =>
+  request<{ success: boolean; lastBackupAt: string | null; backupStatus: string; backupError: string }>("/google/backup/status");
 
-export const importFromSheets = () =>
-  request<{ success: boolean; message: string; imported: Record<string, number> }>("/google/sheets/import", { method: "POST" });
+export const backupNow = () =>
+  request<{ success: boolean; message: string; lastBackupAt: string }>("/google/backup/now", { method: "POST" });
+
+export const restoreBackup = () =>
+  request<{ success: boolean; message: string; backupCreatedAt: string; restoredAt: string }>("/google/backup/restore", { method: "POST" });
+
+// ─── Google Integrations ──────────────────────────────────────────────────────
 
 export const syncCalendar = () =>
   request<{ success: boolean; message: string }>("/google/calendar/sync", { method: "POST" });

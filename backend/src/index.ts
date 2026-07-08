@@ -18,6 +18,9 @@ import notificationsRouter from "./routes/notifications";
 import calendarRouter from "./routes/calendar";
 import settingsRouter from "./routes/settings";
 import googleRouter from "./routes/google";
+import authRouter from "./routes/auth";
+import { authMiddleware } from "./middleware/authMiddleware";
+import { BackupService } from "./services/backup/BackupService";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -35,7 +38,13 @@ app.get("/api/status", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString(), service: "REX OS API" });
 });
 
-// ── Routes ──────────────────────────────────────────────────
+// ── Public routes (no auth required) ─────────────────────────
+app.use("/api/auth", authRouter);
+
+// ── Apply JWT auth to all routes below ───────────────────────
+app.use("/api", authMiddleware);
+
+// ── Protected Routes ─────────────────────────────────────────
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/beats", beatsRouter);
 app.use("/api/projects", projectsRouter);
@@ -70,6 +79,7 @@ if (!process.env.VERCEL) {
     console.log(`\n🚀 REX OS API running on http://localhost:${PORT}`);
     console.log(`   Health: http://localhost:${PORT}/api/status`);
     console.log(`   Beats:  http://localhost:${PORT}/api/beats\n`);
+    BackupService.backupIfStaleOnLaunch();
   });
 }
 

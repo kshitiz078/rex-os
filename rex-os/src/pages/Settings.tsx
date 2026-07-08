@@ -1,10 +1,28 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Clock, Target, Database, Download, RotateCcw, Cloud, RefreshCw } from "lucide-react";
+import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Clock, Target, Database, Download, RotateCcw, Cloud } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import * as api from "../services/api";
 
 export default function Settings() {
   const { appSettings, updateSettings } = useAppContext();
+  const [backupStatus, setBackupStatus] = useState({
+    lastBackupAt: appSettings.lastBackupAt || null,
+    backupStatus: appSettings.backupStatus || "never",
+    backupError: appSettings.backupError || "",
+  });
+
+  useEffect(() => {
+    api.getBackupStatus().then(res => {
+      if (res?.success) {
+        setBackupStatus({
+          lastBackupAt: res.lastBackupAt,
+          backupStatus: res.backupStatus,
+          backupError: res.backupError,
+        });
+      }
+    });
+  }, []);
 
   const themes = [
     { value: "light", label: "Light", icon: Sun },
@@ -13,6 +31,14 @@ export default function Settings() {
   ] as const;
 
   const platforms = ["youtube", "spotify", "beatstars", "airbit", "instagram"];
+
+  const formatBackupTime = (value?: string | null) => {
+    if (!value) return "Never";
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(value));
+  };
 
   const togglePlatform = (p: string) => {
     const current = appSettings.defaultUploadPlatforms;
@@ -176,7 +202,7 @@ export default function Settings() {
       <Card className="border-border/50 bg-gradient-to-br from-primary/5 to-orange-500/5">
         <CardHeader>
           <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Cloud className="w-4 h-4 text-primary" /> Google Integration Settings
+            <Cloud className="w-4 h-4 text-primary" /> Google Backup Settings
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -189,108 +215,73 @@ export default function Settings() {
               className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-primary transition-colors"
               placeholder="Enter Spreadsheet ID"
             />
-            <p className="text-xs text-muted-foreground">REX OS data (Beats, Projects, Logs) will sync to this sheet.</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Google Calendar ID</label>
-            <input
-              type="text"
-              value={appSettings.googleCalendarId || ""}
-              onChange={e => updateSettings({ googleCalendarId: e.target.value })}
-              className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-              placeholder="primary or custom-email@gmail.com"
-            />
-            <p className="text-xs text-muted-foreground">Events created in REX OS will sync to this Google Calendar.</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">User Gmail (for Sharing Docs/Drive)</label>
-            <input
-              type="text"
-              value={appSettings.userGmailAddress || ""}
-              onChange={e => updateSettings({ userGmailAddress: e.target.value })}
-              className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-primary transition-colors"
-              placeholder="your-email@gmail.com"
-            />
-            <p className="text-xs text-muted-foreground">Used to share newly created Google Docs from your Knowledge Vault.</p>
-          </div>
-
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-sm font-semibold">Enable Real-Time Calendar Sync</p>
-              <p className="text-xs text-muted-foreground">Automatically write calendar changes to Google</p>
-            </div>
-            <button
-              onClick={() => updateSettings({ googleSyncEnabled: !appSettings.googleSyncEnabled })}
-              className={`relative w-12 h-6 rounded-full transition-colors ${appSettings.googleSyncEnabled ? 'bg-primary' : 'bg-secondary'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${appSettings.googleSyncEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
+            <p className="text-xs text-muted-foreground">REX OS writes complete backup snapshots here. Google is not the live database.</p>
           </div>
 
           <div className="pt-4 border-t border-border/50 space-y-3">
-            {/* Row 1: Sheets */}
+            <div className="rounded-xl border border-border/60 bg-background/60 p-4 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">Cloud Backup</p>
+                  <p className="text-xs text-muted-foreground">Your data lives in REX OS. Google stores snapshots for recovery.</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Last Backup</p>
+                  <p className="text-xs font-bold">{formatBackupTime(backupStatus.lastBackupAt)}</p>
+                </div>
+              </div>
+              {backupStatus.backupStatus === "failed" && (
+                <p className="text-xs font-semibold text-red-500">
+                  Google backup warning: {backupStatus.backupError || "Backup failed. REX OS will keep working normally."}
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={async () => {
-                  const res = await api.syncSheets();
+                  const res = await api.backupNow();
                   if (res?.success) {
+                    setBackupStatus(prev => ({
+                      ...prev,
+                      lastBackupAt: res.lastBackupAt,
+                      backupStatus: "success",
+                      backupError: "",
+                    }));
+                    updateSettings({ lastBackupAt: res.lastBackupAt, backupStatus: "success", backupError: "" });
                     alert("✅ " + res.message);
                   } else {
                     const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
-                    alert(`Sync failed: ${errMsg}`);
+                    setBackupStatus(prev => ({ ...prev, backupStatus: "failed", backupError: errMsg }));
+                    alert(`Backup failed: ${errMsg}\n\nREX OS will keep working normally.`);
                   }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Sync Sheets →
+                <Cloud className="w-3.5 h-3.5" /> Backup Now
               </button>
               <button
                 onClick={async () => {
-                  if (!window.confirm("This will import data from Google Sheets into REX OS (adds/updates records). Continue?")) return;
-                  const res = await api.importFromSheets();
+                  if (!window.confirm("This will replace your current local data with the latest Google backup.\n\nContinue?")) return;
+                  const res = await api.restoreBackup();
                   if (res?.success) {
+                    setBackupStatus(prev => ({
+                      ...prev,
+                      lastBackupAt: res.backupCreatedAt,
+                      backupStatus: "restored",
+                      backupError: "",
+                    }));
                     alert("✅ " + res.message);
+                    window.location.reload();
                   } else {
                     const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
-                    alert(`Import failed: ${errMsg}`);
+                    setBackupStatus(prev => ({ ...prev, backupStatus: "failed", backupError: errMsg }));
+                    alert(`Restore failed: ${errMsg}`);
                   }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors border border-emerald-500/30"
               >
-                <Cloud className="w-3.5 h-3.5" /> ← Import Sheets
-              </button>
-            </div>
-            {/* Row 2: Calendar + Tasks */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={async () => {
-                  const res = await api.syncCalendar();
-                  if (res?.success) {
-                    alert("✅ Google Calendar sync completed successfully!");
-                  } else {
-                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
-                    alert(`Sync failed: ${errMsg}`);
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Sync Calendar
-              </button>
-              <button
-                onClick={async () => {
-                  const res = await api.syncTasks();
-                  if (res?.success) {
-                    alert("✅ Google Tasks sync completed successfully!");
-                  } else {
-                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
-                    alert(`Sync failed: ${errMsg}`);
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2.5 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Sync Tasks
+                <RotateCcw className="w-3.5 h-3.5" /> Restore Backup
               </button>
             </div>
           </div>

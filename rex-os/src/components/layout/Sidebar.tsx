@@ -16,6 +16,7 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
 
@@ -78,7 +79,7 @@ function NavGroup({ title, items, location }: { title: string; items: typeof mai
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
   const location = useLocation();
   const { notifications, beats, weeklyReview } = useAppContext();
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -141,14 +142,23 @@ export default function Sidebar() {
           <Settings className="w-4 h-4" />
           Settings
         </Link>
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-sm">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-sm shrink-0">
             <span className="text-xs font-black text-white">R</span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs font-bold">Rex</p>
             <p className="text-[10px] text-muted-foreground">Music Producer</p>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              title="Log out"
+              className="w-6 h-6 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </aside>
