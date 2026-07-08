@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { randomUUID } from "crypto";
 
 // Get auth client
 export function getGoogleAuth(): any {
@@ -50,7 +51,7 @@ export async function syncSheetsData(spreadsheetId: string, data: SheetSyncData)
   const existingTitles = meta.data.sheets?.map(s => s.properties?.title) || [];
 
   const requiredSheets = [
-    { title: "Beats", headers: ["ID", "Name", "Genre", "Mood", "BPM", "Key", "Duration", "Status", "Mix Status", "Master Status", "Video Status", "Notes", "Date Created"] },
+    { title: "Beats", headers: ["ID", "Name", "Genre", "Mood", "BPM", "Key", "Duration", "Status", "Mix Status", "Master Status", "Video Status", "Notes", "Date Created", "Video Theme"] },
     { title: "Projects", headers: ["ID", "Name", "Description", "Progress", "Status", "Priority", "Deadline", "Health", "Time Invested", "Recent Activity", "Notes"] },
     { title: "Action Items", headers: ["ID", "Text", "Completed", "Priority", "Estimated Minutes", "Project", "Energy"] },
     { title: "Daily Logs", headers: ["ID", "Date", "Category", "Task", "Output", "Time Spent", "Status", "Notes", "Next Action"] }
@@ -82,7 +83,7 @@ export async function syncSheetsData(spreadsheetId: string, data: SheetSyncData)
     if (sheetInfo.title === "Beats") {
       rows.push(...data.beats.map(b => [
         b.id, b.name, b.genre, b.mood, b.bpm, b.key, b.duration, b.status,
-        b.mixStatus, b.masterStatus, b.videoStatus, b.notes, b.dateCreated
+        b.mixStatus, b.masterStatus, b.videoStatus, b.notes, b.dateCreated, b.videoTheme
       ]));
     } else if (sheetInfo.title === "Projects") {
       rows.push(...data.projects.map(p => [
@@ -147,24 +148,25 @@ export async function importFromSheets(spreadsheetId: string): Promise<SheetImpo
   }
 
   // ── Beats ────────────────────────────────────────────────────────────────
-  // Headers: ID, Name, Genre, Mood, BPM, Key, Duration, Status, Mix Status, Master Status, Video Status, Notes, Date Created
+  // Headers: ID, Name, Genre, Mood, BPM, Key, Duration, Status, Mix Status, Master Status, Video Status, Notes, Date Created, Video Theme
   const beatRows = await readSheet("Beats");
   result.beats = beatRows
     .filter(r => r[1]) // must have a name
     .map(r => ({
-      id: r[0] ? Number(r[0]) : undefined,
-      name: r[1] || "",
-      genre: r[2] || "",
-      mood: r[3] || "",
-      bpm: r[4] ? Number(r[4]) : null,
-      key: r[5] || "",
-      duration: r[6] || "",
-      status: r[7] || "idea",
-      mixStatus: r[8] || "unmixed",
-      masterStatus: r[9] || "unmastered",
-      videoStatus: r[10] || "no-video",
-      notes: r[11] || "",
-      dateCreated: r[12] || new Date().toISOString().split("T")[0],
+      id: r[0]?.trim() || randomUUID(),
+      name: r[1]?.trim() || "",
+      genre: r[2]?.trim() || "",
+      mood: r[3]?.trim() || "",
+      bpm: Number(r[4]) || 0,
+      key: r[5]?.trim() || "",
+      duration: r[6]?.trim() || "",
+      status: r[7]?.trim() || "In Progress",
+      mixStatus: r[8]?.trim() || "Not Started",
+      masterStatus: r[9]?.trim() || "Not Started",
+      videoStatus: r[10]?.trim() || "Not Started",
+      notes: r[11]?.trim() || "",
+      dateCreated: r[12]?.trim() || new Date().toISOString().split("T")[0],
+      videoTheme: r[13]?.trim() || "",
     }));
 
   // ── Projects ─────────────────────────────────────────────────────────────
