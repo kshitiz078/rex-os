@@ -235,8 +235,12 @@ export default function Settings() {
               <button
                 onClick={async () => {
                   const res = await api.syncSheets();
-                  if (res?.success) alert("✅ " + res.message);
-                  else alert("Sync failed. Check spreadsheet share settings.");
+                  if (res?.success) {
+                    alert("✅ " + res.message);
+                  } else {
+                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
+                    alert(`Sync failed: ${errMsg}`);
+                  }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
               >
@@ -246,8 +250,12 @@ export default function Settings() {
                 onClick={async () => {
                   if (!window.confirm("This will import data from Google Sheets into REX OS (adds/updates records). Continue?")) return;
                   const res = await api.importFromSheets();
-                  if (res?.success) alert("✅ " + res.message);
-                  else alert("Import failed. Make sure your sheet has the correct column headers.");
+                  if (res?.success) {
+                    alert("✅ " + res.message);
+                  } else {
+                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
+                    alert(`Import failed: ${errMsg}`);
+                  }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl font-bold text-xs transition-colors border border-emerald-500/30"
               >
@@ -259,8 +267,12 @@ export default function Settings() {
               <button
                 onClick={async () => {
                   const res = await api.syncCalendar();
-                  if (res?.success) alert("✅ Google Calendar sync completed successfully!");
-                  else alert("Sync failed. Check calendar share permissions.");
+                  if (res?.success) {
+                    alert("✅ Google Calendar sync completed successfully!");
+                  } else {
+                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
+                    alert(`Sync failed: ${errMsg}`);
+                  }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
               >
@@ -269,8 +281,12 @@ export default function Settings() {
               <button
                 onClick={async () => {
                   const res = await api.syncTasks();
-                  if (res?.success) alert("✅ Google Tasks sync completed successfully!");
-                  else alert("Sync failed. Check Google Tasks connection.");
+                  if (res?.success) {
+                    alert("✅ Google Tasks sync completed successfully!");
+                  } else {
+                    const errMsg = (res as any)?.message || (res as any)?.error || "Unknown error";
+                    alert(`Sync failed: ${errMsg}`);
+                  }
                 }}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white rounded-xl font-bold text-xs transition-colors"
               >
