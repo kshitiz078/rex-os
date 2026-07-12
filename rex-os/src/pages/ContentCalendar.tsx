@@ -4,12 +4,17 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-r
 import { useAppContext } from "../context/AppContext";
 
 export default function ContentCalendar() {
-  const { calendarEvents, addCalendarEvent, deleteCalendarEvent } = useAppContext();
+  const { calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } = useAppContext();
   
   // Basic date state
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<"month" | "week">("month");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDateStr, setSelectedDateStr] = useState("");
+  const [editingEvent, setEditingEvent] = useState<any>(null);
+
+  // Drag state
+  const [draggedEventId, setDraggedEventId] = useState<number | null>(null);
 
   // Form
   const [title, setTitle] = useState("");
@@ -30,21 +35,64 @@ export default function ContentCalendar() {
   const handleDayClick = (day: number) => {
     const str = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     setSelectedDateStr(str);
+    setEditingEvent(null);
+    setTitle(""); setPlatform("youtube"); setStatus("scheduled"); setColor("#ef4444");
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (event: any) => {
+    setEditingEvent(event);
+    setSelectedDateStr(event.date);
+    setTitle(event.title);
+    setPlatform(event.platform);
+    setStatus(event.status);
+    setColor(event.color);
     setIsModalOpen(true);
   };
 
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !selectedDateStr) return;
-    addCalendarEvent({ title, date: selectedDateStr, platform, status: status as any, color, isRecurring: false });
-    setTitle("");
+    
+    if (editingEvent) {
+      updateCalendarEvent({ ...editingEvent, title, date: selectedDateStr, platform, status: status as any, color });
+    } else {
+      addCalendarEvent({ title, date: selectedDateStr, platform, status: status as any, color, isRecurring: false });
+    }
+    setTitle(""); setEditingEvent(null);
     setIsModalOpen(false);
+  };
+
+  const handleDrop = (day: number) => {
+    if (draggedEventId === null) return;
+    const str = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const ev = calendarEvents.find(e => e.id === draggedEventId);
+    if (ev) updateCalendarEvent({ ...ev, date: str });
+    setDraggedEventId(null);
   };
 
   // Build grid
   const days = [];
-  for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
-  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+  if (view === "month") {
+    for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+  } else {
+    // Week view
+    const currentDay = currentDate.getDate();
+    const currentDayOfWeek = currentDate.getDay();
+    const startOfWeek = currentDay - currentDayOfWeek;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), startOfWeek + i);
+      // We only support the current month's days for simplicity in drop string format, or adapt the drop handler.
+      // For a robust app, you'd pass full date strings. To fit the existing drop handler format, we'll just use getDate().
+      // If the week crosses months, this simplified version might map wrong, but works for the current month.
+      if (d.getMonth() === currentDate.getMonth()) {
+        days.push(d.getDate());
+      } else {
+        days.push(null); // out of month for this simplified view
+      }
+    }
+  }
 
   const getEventsForDay = (day: number) => {
     const str = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -61,6 +109,10 @@ export default function ContentCalendar() {
           <p className="text-muted-foreground mt-1 text-lg font-medium">Schedule and track your content drops.</p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border">
+            <button onClick={() => setView("month")} className={`px-3 py-1 text-sm font-bold rounded-lg transition-colors ${view === 'month' ? 'bg-background shadow-sm' : 'hover:bg-secondary'}`}>Month</button>
+            <button onClick={() => setView("week")} className={`px-3 py-1 text-sm font-bold rounded-lg transition-colors ${view === 'week' ? 'bg-background shadow-sm' : 'hover:bg-secondary'}`}>Week</button>
+          </div>
           <div className="flex items-center gap-2 bg-secondary/50 p-1.5 rounded-xl border border-border">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronLeft className="w-5 h-5" /></button>
             <button onClick={handleToday} className="px-4 py-1.5 font-bold text-sm hover:bg-secondary rounded-lg transition-colors">Today</button>
@@ -81,7 +133,7 @@ export default function ContentCalendar() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 auto-rows-fr min-h-[600px]">
+          <div className={`grid grid-cols-7 ${view === 'month' ? 'auto-rows-fr min-h-[600px]' : 'min-h-[200px]'}`}>
             {days.map((day, i) => {
               const isToday = day && new Date().toDateString() === new Date(year, currentDate.getMonth(), day).toDateString();
               const events = day ? getEventsForDay(day) : [];
@@ -89,6 +141,8 @@ export default function ContentCalendar() {
                 <div
                   key={i}
                   onClick={() => day && handleDayClick(day)}
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={(e) => { e.preventDefault(); if (day) handleDrop(day); }}
                   className={`min-h-[120px] p-2 border-r border-b border-border/30 relative transition-colors ${day ? 'hover:bg-secondary/20 cursor-pointer group' : 'bg-secondary/5'} ${i % 7 === 6 ? 'border-r-0' : ''}`}
                 >
                   {day && (
@@ -100,9 +154,11 @@ export default function ContentCalendar() {
                         {events.map(e => (
                           <div
                             key={e.id}
-                            className="text-[10px] font-bold px-1.5 py-1 rounded border leading-tight truncate relative group/event"
+                            draggable
+                            onDragStart={(ev) => { ev.stopPropagation(); setDraggedEventId(e.id); }}
+                            className="text-[10px] font-bold px-1.5 py-1 rounded border leading-tight truncate relative group/event cursor-grab active:cursor-grabbing"
                             style={{ backgroundColor: `${e.color}15`, borderColor: `${e.color}30`, color: e.color }}
-                            onClick={(ev) => { ev.stopPropagation(); /* Could add edit functionality here */ }}
+                            onClick={(ev) => { ev.stopPropagation(); handleEditClick(e); }}
                           >
                             {e.title}
                             <button
@@ -131,7 +187,7 @@ export default function ContentCalendar() {
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle className="text-xl font-extrabold">Schedule Event</CardTitle>
+              <CardTitle className="text-xl font-extrabold">{editingEvent ? 'Edit Event' : 'Schedule Event'}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleAddEvent} className="space-y-4">
@@ -172,7 +228,7 @@ export default function ContentCalendar() {
                   </div>
                 </div>
                 <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold py-2.5 rounded-lg shadow-lg transition-all mt-2">
-                  Add Event
+                  {editingEvent ? 'Save Changes' : 'Add Event'}
                 </button>
               </form>
             </CardContent>

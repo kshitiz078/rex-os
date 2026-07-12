@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardDrive, Plus, X, Search, Trash2, Image, Film, Package, Mic, FileCode, Layout, Award } from "lucide-react";
+import { HardDrive, Plus, X, Search, Trash2, Image, Film, Package, Mic, FileCode, Layout, Award, ExternalLink } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { Asset } from "../context/AppContext";
+
+const extractDriveFileId = (url: string): string | null => {
+  const m = url.match(/\/file\/d\/([^/]+)/);
+  return m ? m[1] : null;
+};
+
+const getDriveEmbedUrl = (url: string) => {
+  const id = extractDriveFileId(url);
+  return id ? `https://drive.google.com/file/d/${id}/preview` : null;
+};
 
 const ASSET_TYPES: Asset["type"][] = ["Cover Art", "Video", "Export", "Master", "Stem", "Template", "Brand"];
 
@@ -35,19 +45,19 @@ export default function Assets() {
   // Form
   const [name, setName] = useState("");
   const [type, setType] = useState<Asset["type"]>("Cover Art");
-  const [size, setSize] = useState("");
-  const [format, setFormat] = useState("");
+  const [driveLink, setDriveLink] = useState("");
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
+  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
   const resetForm = () => {
-    setName(""); setType("Cover Art"); setSize(""); setFormat(""); setTags(""); setNotes("");
+    setName(""); setType("Cover Art"); setDriveLink(""); setTags(""); setNotes("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    addAsset({ name, type, size, format, tags: tags.split(",").map(t => t.trim()).filter(Boolean), notes });
+    addAsset({ name, type, driveLink, previewUrl: getDriveEmbedUrl(driveLink) || "", tags: tags.split(",").map(t => t.trim()).filter(Boolean), notes });
     resetForm();
     setIsModalOpen(false);
   };
@@ -55,7 +65,7 @@ export default function Assets() {
   const filtered = assets.filter(a => {
     const matchSearch = !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      a.format.toLowerCase().includes(searchQuery.toLowerCase());
+      (a.notes && a.notes.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchType = filterType === "All" || a.type === filterType;
     return matchSearch && matchType;
   });
@@ -123,6 +133,7 @@ export default function Assets() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(asset => {
             const Icon = TYPE_ICONS[asset.type];
+            const embedUrl = asset.previewUrl || getDriveEmbedUrl(asset.driveLink || "");
             return (
               <Card key={asset.id} className="border-border/50 bg-card/50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group">
                 <CardContent className="p-4">
@@ -133,17 +144,37 @@ export default function Assets() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <h3 className="font-bold text-sm leading-tight group-hover:text-primary transition-colors">{asset.name}</h3>
-                        <button onClick={() => deleteAsset(asset.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-red-500 text-muted-foreground transition-all shrink-0 ml-1">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all ml-1 shrink-0">
+                          {asset.driveLink && (
+                            <a href={asset.driveLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                              className="p-1 hover:text-primary text-muted-foreground transition-all">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          <button onClick={() => deleteAsset(asset.id)} className="p-1 hover:text-red-500 text-muted-foreground transition-all">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${TYPE_COLORS[asset.type]}`}>{asset.type}</span>
-                        {asset.format && <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded font-bold uppercase">{asset.format}</span>}
-                        {asset.size && <span className="text-[10px] text-muted-foreground font-medium">{asset.size}</span>}
+                        {asset.driveLink && <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded font-bold">Drive</span>}
                       </div>
                     </div>
                   </div>
+
+                  {embedUrl && (
+                    <div className="mt-3 rounded-lg overflow-hidden border border-border/30 h-40 cursor-pointer"
+                      onClick={() => setPreviewAsset(previewAsset?.id === asset.id ? null : asset)}>
+                      {previewAsset?.id === asset.id ? (
+                        <iframe src={embedUrl} className="w-full h-full" allow="autoplay" />
+                      ) : (
+                        <div className="w-full h-full bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground font-medium">
+                          Click to preview
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {asset.tags.length > 0 && (
                     <div className="flex gap-1 flex-wrap mt-3">
@@ -154,7 +185,6 @@ export default function Assets() {
                   )}
 
                   {asset.notes && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{asset.notes}</p>}
-
                   <p className="text-[10px] text-muted-foreground mt-2">Added {asset.dateAdded}</p>
                 </CardContent>
               </Card>
@@ -195,17 +225,11 @@ export default function Assets() {
                     })}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Size</label>
-                    <input type="text" value={size} onChange={e => setSize(e.target.value)} placeholder="e.g. 2.4 MB"
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Format</label>
-                    <input type="text" value={format} onChange={e => setFormat(e.target.value)} placeholder="PNG, MP4, ZIP..."
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Google Drive Link</label>
+                  <input type="url" value={driveLink} onChange={e => setDriveLink(e.target.value)} placeholder="https://drive.google.com/file/d/..."
+                    className="w-full px-3.5 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  <p className="text-xs text-muted-foreground">Paste a shareable Google Drive link to embed a preview.</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags</label>

@@ -29,10 +29,10 @@ export default function BeatLibrary() {
   const [duration, setDuration] = useState("2:30");
   const [videoTheme, setVideoTheme] = useState("");
   const [status, setStatus] = useState<Beat['status']>("In Progress");
-  const [youtube, setYoutube] = useState(false);
-  const [spotify, setSpotify] = useState(false);
-  const [beatstars, setBeatstars] = useState(false);
-  const [airbit, setAirbit] = useState(false);
+  const [youtube, setYoutube] = useState("Draft");
+  const [spotify, setSpotify] = useState("Draft");
+  const [beatstars, setBeatstars] = useState("Draft");
+  const [airbit, setAirbit] = useState("Draft");
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -43,13 +43,14 @@ export default function BeatLibrary() {
       name, genre, mood, bpm, key: beatKey, duration,
       videoTheme: videoTheme || "Abstract Art", status,
       mixStatus: "Not Started", masterStatus: "Not Started", videoStatus: "Not Started",
-      platforms: { youtube, spotify, beatstars, airbit },
+      timeSignature: "4/4", coverArt: "",
+      platforms: { youtube, spotify, beatstars, airbit, appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
       tags: tags.split(",").map(t => t.trim()).filter(Boolean),
       notes,
     });
     setName(""); setGenre("Trap"); setMood("Dark"); setBpm(140); setBeatKey("C Min");
     setDuration("2:30"); setVideoTheme(""); setStatus("In Progress");
-    setYoutube(false); setSpotify(false); setBeatstars(false); setAirbit(false);
+    setYoutube("Draft"); setSpotify("Draft"); setBeatstars("Draft"); setAirbit("Draft");
     setTags(""); setNotes("");
     setIsModalOpen(false);
   };
@@ -59,7 +60,7 @@ export default function BeatLibrary() {
       ...beat,
       name: `${beat.name} (Copy)`,
       status: "In Progress",
-      platforms: { youtube: false, spotify: false, beatstars: false, airbit: false },
+      platforms: { youtube: "Draft", spotify: "Draft", beatstars: "Draft", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
     });
   };
 
@@ -374,13 +375,13 @@ export default function BeatLibrary() {
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Platforms</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { label: "YouTube", value: youtube, set: setYoutube },
-                      { label: "Spotify", value: spotify, set: setSpotify },
-                      { label: "BeatStars", value: beatstars, set: setBeatstars },
-                      { label: "Airbit", value: airbit, set: setAirbit },
+                      { label: "YouTube", key: "youtube", value: youtube, set: setYoutube },
+                      { label: "Spotify", key: "spotify", value: spotify, set: setSpotify },
+                      { label: "BeatStars", key: "beatstars", value: beatstars, set: setBeatstars },
+                      { label: "Airbit", key: "airbit", value: airbit, set: setAirbit },
                     ].map(p => (
                       <label key={p.label} className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-                        <input type="checkbox" checked={p.value} onChange={e => p.set(e.target.checked)}
+                        <input type="checkbox" checked={p.value === "Published"} onChange={e => p.set(e.target.checked ? "Published" : "Draft")}
                           className="rounded text-primary border-border focus:ring-primary" />
                         {p.label}
                       </label>

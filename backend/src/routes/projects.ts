@@ -5,6 +5,7 @@ const router = Router();
 
 const mapProject = (p: {
   id: number; name: string; description: string; progress: number; status: string;
+  category: string; owner: string; tags: string; estimatedEffort: string;
   statusColor: string; priority: string; priorityColor: string; deadline: string;
   recentActivity: string; notes: string; timeInvested: number; health: string;
   createdAt: Date; updatedAt: Date;
@@ -14,6 +15,10 @@ const mapProject = (p: {
   id: p.id,
   name: p.name,
   description: p.description,
+  category: p.category,
+  owner: p.owner,
+  tags: p.tags,
+  estimatedEffort: p.estimatedEffort,
   progress: p.progress,
   status: p.status,
   statusColor: p.statusColor,
@@ -39,10 +44,14 @@ router.get("/", async (_req, res) => {
 
 // POST /api/projects
 router.post("/", async (req, res) => {
-  const { name, description, priority, deadline, milestones } = req.body;
+  const { name, description, category, owner, tags, estimatedEffort, priority, deadline, milestones } = req.body;
   const project = await prisma.project.create({
     data: {
       name, description, priority,
+      category: category || "General",
+      owner: owner || "CEO",
+      tags: tags || "[]",
+      estimatedEffort: estimatedEffort || "TBD",
       priorityColor: priority === "High" ? "text-orange-500 bg-orange-500/10" : "text-yellow-600 bg-yellow-500/10",
       deadline: deadline || "TBD",
       milestones: {
@@ -60,12 +69,12 @@ router.post("/", async (req, res) => {
 // PUT /api/projects/:id
 router.put("/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const { name, description, progress, status, statusColor, priority, priorityColor, deadline,
+  const { name, description, category, owner, tags, estimatedEffort, progress, status, statusColor, priority, priorityColor, deadline,
     recentActivity, notes, timeInvested, health } = req.body;
 
   const project = await prisma.project.update({
     where: { id },
-    data: { name, description, progress, status, statusColor, priority, priorityColor,
+    data: { name, description, category, owner, tags, estimatedEffort, progress, status, statusColor, priority, priorityColor,
       deadline, recentActivity, notes, timeInvested, health },
     include: { tasks: true, milestones: true },
   });
@@ -105,7 +114,13 @@ router.patch("/:id/tasks/:taskId/toggle", async (req, res) => {
   const allTasks = await prisma.projectTask.findMany({ where: { projectId } });
   const completedCount = allTasks.filter((t) => t.completed).length;
   const progress = allTasks.length > 0 ? Math.round((completedCount / allTasks.length) * 100) : 0;
-  await prisma.project.update({ where: { id: projectId }, data: { progress } });
+  await prisma.project.update({ 
+    where: { id: projectId }, 
+    data: { 
+      progress,
+      recentActivity: `Toggled task: ${task.text}`
+    } 
+  });
 
   res.json(updated);
 });
@@ -119,7 +134,40 @@ router.patch("/:id/milestones/:milestoneId/toggle", async (req, res) => {
     where: { id: milestoneId },
     data: { completed: !milestone.completed },
   });
+  
+  await prisma.project.update({ where: { id: milestone.projectId }, data: { recentActivity: `Toggled milestone: ${milestone.text}` } });
+  
   res.json(updated);
+});
+
+// PUT /api/projects/:id/tasks/:taskId
+router.put("/:id/tasks/:taskId", async (req, res) => {
+  const taskId = Number(req.params.taskId);
+  const projectId = Number(req.params.id);
+  const { text, priority, dueDate } = req.body;
+  
+  const task = await prisma.projectTask.update({
+    where: { id: taskId },
+    data: { text, priority, dueDate }
+  });
+  
+  await prisma.project.update({ where: { id: projectId }, data: { recentActivity: `Updated task: ${text}` } });
+  res.json(task);
+});
+
+// DELETE /api/projects/:id/tasks/:taskId
+router.delete("/:id/tasks/:taskId", async (req, res) => {
+  const taskId = Number(req.params.taskId);
+  const projectId = Number(req.params.id);
+  
+  const task = await prisma.projectTask.findUnique({ where: { id: taskId } });
+  await prisma.projectTask.delete({ where: { id: taskId } });
+  
+  if (task) {
+    await prisma.project.update({ where: { id: projectId }, data: { recentActivity: `Deleted task: ${task.text}` } });
+  }
+  
+  res.json({ success: true });
 });
 
 export default router;

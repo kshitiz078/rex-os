@@ -18,7 +18,9 @@ export interface Beat {
   mixStatus: 'Done' | 'In Progress' | 'Not Started';
   masterStatus: 'Done' | 'In Progress' | 'Not Started';
   videoStatus: 'Done' | 'In Progress' | 'Not Started';
-  platforms: { youtube: boolean; spotify: boolean; beatstars: boolean; airbit: boolean };
+  timeSignature: string;
+  coverArt: string;
+  platforms: { youtube: string; spotify: string; beatstars: string; airbit: string; appleMusic: string; soundcloud: string; instagram: string; tiktok: string };
   tags: string[];
   notes: string;
   dateCreated: string;
@@ -36,6 +38,10 @@ export interface Project {
   id: number;
   name: string;
   description: string;
+  category: string;
+  owner: string;
+  tags: string[];
+  estimatedEffort: string;
   progress: number;
   status: 'Active' | 'In Progress' | 'Ongoing' | 'Completed' | 'At Risk';
   statusColor: string;
@@ -166,8 +172,8 @@ export interface Asset {
   id: number;
   name: string;
   type: 'Cover Art' | 'Video' | 'Export' | 'Master' | 'Stem' | 'Template' | 'Brand';
-  size: string;
-  format: string;
+  driveLink: string;
+  previewUrl: string;
   beatId?: string;
   projectId?: number;
   tags: string[];
@@ -231,11 +237,14 @@ export interface AppContextType {
   updateProject: (project: Project) => void;
   toggleProjectTask: (projectId: number, taskId: number) => void;
   addProjectTask: (projectId: number, task: Omit<ProjectTask, 'id'>) => void;
+  editProjectTask: (projectId: number, taskId: number, task: Omit<ProjectTask, 'id'>) => void;
+  deleteProjectTask: (projectId: number, taskId: number) => void;
 
   // Publishing
   publishingCards: PublishingCard[];
   addPublishingCard: (card: Omit<PublishingCard, "id">) => void;
   updatePublishingCardColumn: (id: number, columnId: string) => void;
+  editPublishingCard: (id: number, updates: Partial<PublishingCard>) => void;
   deletePublishingCard: (id: number) => void;
 
   // Goals
@@ -243,6 +252,7 @@ export interface AppContextType {
   quarterlyGoals: QuarterlyGoal[];
   monthlyGoals: MonthlyGoal[];
   updateGoalProgress: (id: number, current: number) => void;
+  updateGoal: (id: number, updates: Partial<MonthlyGoal>) => void;
   addGoal: (goal: Omit<MonthlyGoal, 'id' | 'progress'>) => void;
   deleteGoal: (id: number) => void;
 
@@ -306,6 +316,7 @@ export interface AppContextType {
   // Settings
   appSettings: AppSettings;
   updateSettings: (settings: Partial<AppSettings>) => void;
+  resetPortal: () => void;
 
   // Derived Stats
   publishingStreak: number;
@@ -324,29 +335,29 @@ const initialBeats: Beat[] = [
   {
     id: "B-042", name: "Midnight Drift", genre: "Trap", mood: "Dark", bpm: 140, key: "C Min",
     duration: "2:45", videoTheme: "Cyberpunk City", status: "Published",
-    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done",
-    platforms: { youtube: true, spotify: true, beatstars: true, airbit: false },
+    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done", timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
     tags: ["dark", "trap", "808"], notes: "Best seller on BeatStars", dateCreated: "2026-06-28",
   },
   {
     id: "B-043", name: "Summer Breeze", genre: "R&B", mood: "Chill", bpm: 95, key: "F Maj",
     duration: "3:10", videoTheme: "Sunset Beach", status: "Ready",
-    mixStatus: "Done", masterStatus: "In Progress", videoStatus: "Not Started",
-    platforms: { youtube: false, spotify: false, beatstars: true, airbit: false },
+    mixStatus: "Done", masterStatus: "In Progress", videoStatus: "Not Started", timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Draft", spotify: "Draft", beatstars: "Published", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
     tags: ["chill", "rnb", "summer"], notes: "Needs thumbnail before publishing", dateCreated: "2026-07-01",
   },
   {
     id: "B-044", name: "Titanium", genre: "Drill", mood: "Aggressive", bpm: 142, key: "D Min",
     duration: "2:15", videoTheme: "Industrial", status: "In Progress",
-    mixStatus: "In Progress", masterStatus: "Not Started", videoStatus: "Not Started",
-    platforms: { youtube: false, spotify: false, beatstars: false, airbit: false },
+    mixStatus: "In Progress", masterStatus: "Not Started", videoStatus: "Not Started", timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Draft", spotify: "Draft", beatstars: "Draft", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
     tags: ["drill", "aggressive", "hard"], notes: "WIP - mixing in progress", dateCreated: "2026-07-02",
   },
   {
     id: "B-045", name: "Cloud Nine", genre: "Lo-Fi", mood: "Relaxed", bpm: 85, key: "G Maj",
     duration: "2:55", videoTheme: "Anime Rain", status: "Published",
-    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done",
-    platforms: { youtube: true, spotify: true, beatstars: true, airbit: true },
+    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done", timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Published", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
     tags: ["lofi", "chill", "anime"], notes: "Featured playlist on Spotify", dateCreated: "2026-06-15",
   },
 ];
@@ -354,6 +365,7 @@ const initialBeats: Beat[] = [
 const initialProjects: Project[] = [
   {
     id: 1, name: "Rex Music", description: "Core music production and artist releases.", progress: 68,
+    category: "General", owner: "CEO", tags: ["music", "ep"], estimatedEffort: "2 months",
     status: "Active", statusColor: "text-emerald-500 bg-emerald-500/10",
     priority: "High", priorityColor: "text-orange-500 bg-orange-500/10", deadline: "Q3 2026",
     milestones: [
@@ -372,6 +384,7 @@ const initialProjects: Project[] = [
   },
   {
     id: 2, name: "Beat Selling Website", description: "E-commerce platform for leasing and selling beats.",
+    category: "Business", owner: "Tech Lead", tags: ["web", "ecommerce"], estimatedEffort: "1 month",
     progress: 45, status: "In Progress", statusColor: "text-blue-500 bg-blue-500/10",
     priority: "High", priorityColor: "text-orange-500 bg-orange-500/10", deadline: "Aug 15, 2026",
     milestones: [
@@ -389,6 +402,7 @@ const initialProjects: Project[] = [
   },
   {
     id: 3, name: "Personal Brand", description: "Content creation, YouTube channel, and social media growth.",
+    category: "Marketing", owner: "Creator", tags: ["youtube", "brand"], estimatedEffort: "Ongoing",
     progress: 85, status: "Ongoing", statusColor: "text-primary bg-primary/10",
     priority: "Medium", priorityColor: "text-yellow-600 bg-yellow-500/10", deadline: "Continuous",
     milestones: [
@@ -466,9 +480,9 @@ const initialKnowledgeEntries: KnowledgeEntry[] = [
 ];
 
 const initialAssets: Asset[] = [
-  { id: 1, name: "Midnight Drift Cover Art", type: "Cover Art", size: "2.4 MB", format: "PNG", beatId: "B-042", projectId: 1, tags: ["dark", "cyberpunk"], dateAdded: "2026-06-28", notes: "Final version approved" },
-  { id: 2, name: "Studio Tour B-Roll", type: "Video", size: "1.2 GB", format: "MP4", projectId: 3, tags: ["youtube", "broll"], dateAdded: "2026-07-01", notes: "4K 60fps footage" },
-  { id: 3, name: "Rex Music Logo Pack", type: "Brand", size: "4.8 MB", format: "ZIP", tags: ["brand", "logo"], dateAdded: "2026-06-15", notes: "Light and dark versions included" },
+  { id: 1, name: "Midnight Drift Cover Art", type: "Cover Art", driveLink: "https://drive.google.com/file/d/example1/view", previewUrl: "", beatId: "B-042", projectId: 1, tags: ["dark", "cyberpunk"], dateAdded: "2026-06-28", notes: "Final version approved" },
+  { id: 2, name: "Studio Tour B-Roll", type: "Video", driveLink: "https://drive.google.com/file/d/example2/view", previewUrl: "", projectId: 3, tags: ["youtube", "broll"], dateAdded: "2026-07-01", notes: "4K 60fps footage" },
+  { id: 3, name: "Rex Music Logo Pack", type: "Brand", driveLink: "https://drive.google.com/file/d/example3/view", previewUrl: "", tags: ["brand", "logo"], dateAdded: "2026-06-15", notes: "Light and dark versions included" },
 ];
 
 const initialNotifications: Notification[] = [
@@ -520,7 +534,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loaded = load<Beat[]>("rex_beats", initialBeats);
     return (loaded || []).map(b => ({
       ...b,
-      platforms: b.platforms || { youtube: false, spotify: false, beatstars: false, airbit: false },
+      platforms: b.platforms || { youtube: "Draft", spotify: "Draft", beatstars: "Draft", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+      timeSignature: b.timeSignature || "4/4",
+      coverArt: b.coverArt || "",
       tags: b.tags || [],
       notes: b.notes || "",
       mixStatus: b.mixStatus || "Not Started",
@@ -533,6 +549,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loaded = load<Project[]>("rex_projects", initialProjects);
     return (loaded || []).map(p => ({
       ...p,
+      category: p.category || "General",
+      owner: p.owner || "CEO",
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      estimatedEffort: p.estimatedEffort || "TBD",
       tasks: (p.tasks || []).map(t => ({
         ...t,
         completed: !!t.completed,
@@ -569,8 +589,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   });
 
-  const [annualGoals] = useState<AnnualGoal[]>(() => load("rex_annual_goals", initialAnnualGoals));
-  const [quarterlyGoals] = useState<QuarterlyGoal[]>(() => load("rex_quarterly_goals", initialQuarterlyGoals));
+  const [annualGoals, setAnnualGoals] = useState<AnnualGoal[]>(() => load("rex_annual_goals", initialAnnualGoals));
+  const [quarterlyGoals, setQuarterlyGoals] = useState<QuarterlyGoal[]>(() => load("rex_quarterly_goals", initialQuarterlyGoals));
   
   const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoal[]>(() => {
     const loaded = load<MonthlyGoal[]>("rex_monthly_goals", initialMonthlyGoals);
@@ -643,6 +663,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { localStorage.setItem("rex_notifications", JSON.stringify(notifications)); }, [notifications]);
   useEffect(() => { localStorage.setItem("rex_calendar_events", JSON.stringify(calendarEvents)); }, [calendarEvents]);
   useEffect(() => { localStorage.setItem("rex_app_settings", JSON.stringify(appSettings)); }, [appSettings]);
+
+  // Dark mode sync — apply Tailwind `.dark` class to <html> based on appSettings.theme
+  useEffect(() => {
+    const root = document.documentElement;
+    if (appSettings.theme === 'dark') {
+      root.classList.add('dark');
+    } else if (appSettings.theme === 'light') {
+      root.classList.remove('dark');
+    } else {
+      // system
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) root.classList.add('dark');
+      else root.classList.remove('dark');
+    }
+  }, [appSettings.theme]);
 
   // ──────────────────────────────────────────────────────────────
   // BACKEND HYDRATION — fetches from API on mount, overwrites local
@@ -814,6 +849,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   }, [addActivity]);
 
+  const editProjectTask = useCallback((projectId: number, taskId: number, task: Omit<ProjectTask, 'id'>) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      const tasks = p.tasks.map(t => t.id === taskId ? { ...t, ...task } : t);
+      api.editProjectTask(projectId, taskId, task);
+      return { ...p, tasks, recentActivity: `Updated task: ${task.text}` };
+    }));
+  }, []);
+
+  const deleteProjectTask = useCallback((projectId: number, taskId: number) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      const task = p.tasks.find(t => t.id === taskId);
+      const tasks = p.tasks.filter(t => t.id !== taskId);
+      const completedCount = tasks.filter(t => t.completed).length;
+      const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+      api.deleteProjectTask(projectId, taskId);
+      return { ...p, tasks, progress, recentActivity: `Deleted task: ${task?.text}` };
+    }));
+  }, []);
+
   const addProjectTask = useCallback((projectId: number, task: Omit<ProjectTask, 'id'>) => {
     setProjects(prev => prev.map(p => {
       if (p.id !== projectId) return p;
@@ -853,6 +909,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   }, [addActivity, publishBeat]);
 
+  const editPublishingCard = useCallback((id: number, updates: Partial<PublishingCard>) => {
+    setPublishingCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    api.updatePublishingCard(id, updates);
+  }, []);
+
   const deletePublishingCard = useCallback((id: number) => {
     setPublishingCards(prev => prev.filter(c => c.id !== id));
     api.deletePublishingCard(id);
@@ -870,6 +931,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { ...g, current, progress };
     }));
   }, [addActivity]);
+
+  const updateGoal = useCallback((id: number, updates: Partial<MonthlyGoal>) => {
+    const updateList = (list: any[]) => list.map(g => {
+      if (g.id !== id) return g;
+      const newCurrent = updates.current !== undefined ? updates.current : g.current;
+      const newTotal = updates.total !== undefined ? updates.total : g.total;
+      return { ...g, ...updates, progress: Math.min(100, Math.round((newCurrent / newTotal) * 100)) };
+    });
+    setMonthlyGoals(updateList);
+    setQuarterlyGoals(updateList);
+    setAnnualGoals(updateList);
+    api.updateMonthlyGoal(id, updates);
+  }, []);
 
   const addGoal = useCallback((goal: Omit<MonthlyGoal, 'id' | 'progress'>) => {
     const newGoal = { ...goal, id: Date.now(), progress: Math.round((goal.current / goal.total) * 100) };
@@ -1093,6 +1167,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
+  const resetPortal = useCallback(async () => {
+    await api.resetPortal();
+    // Clear all localStorage data
+    const keysToRemove = ['rex_beats','rex_projects','rex_publishing_cards','rex_monthly_goals',
+      'rex_action_items','rex_weekly_review','rex_one_important_task','rex_secondary_tasks',
+      'rex_notes','rex_activity_log','rex_daily_logs','rex_knowledge','rex_assets',
+      'rex_notifications','rex_calendar_events'];
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    // Reload page to re-hydrate from empty database
+    window.location.reload();
+  }, []);
+
   // ============================================================
   // DERIVED STATS
   // ============================================================
@@ -1108,9 +1194,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       beats, addBeat, updateBeat, publishBeat, deleteBeat,
-      projects, addProject, updateProjectProgress, updateProject, toggleProjectTask, addProjectTask,
-      publishingCards, addPublishingCard, updatePublishingCardColumn, deletePublishingCard,
-      annualGoals, quarterlyGoals, monthlyGoals, updateGoalProgress, addGoal, deleteGoal,
+      projects, addProject, updateProjectProgress, updateProject, toggleProjectTask, addProjectTask, editProjectTask, deleteProjectTask,
+      publishingCards, addPublishingCard, updatePublishingCardColumn, editPublishingCard, deletePublishingCard,
+      annualGoals, quarterlyGoals, monthlyGoals, updateGoalProgress, updateGoal, addGoal, deleteGoal,
       actionItems, addActionItem, toggleActionItem, deleteActionItem, reorderActionItems,
       weeklyReview, updateWeeklyReview,
       oneImportantTask, setOneImportantTask,
@@ -1122,7 +1208,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       assets, addAsset, updateAsset, deleteAsset,
       notifications, markNotificationRead, markAllNotificationsRead, addNotification,
       calendarEvents, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
-      appSettings, updateSettings,
+      appSettings, updateSettings, resetPortal,
       publishingStreak, totalFocusHours, weeklyCompletionRate, monthlyCompletionRate,
     }}>
       {children}

@@ -51,4 +51,32 @@ router.put("/", async (req, res) => {
   res.json({ ...settings, defaultUploadPlatforms: parseArr(settings.defaultUploadPlatforms) });
 });
 
+// POST /api/settings/reset
+router.post("/reset", async (req, res) => {
+  // Clear all user data tables but keep app settings
+  await prisma.projectTask.deleteMany({});
+  await prisma.milestone.deleteMany({});
+  await prisma.project.deleteMany({});
+  
+  await prisma.publishingCard.deleteMany({});
+  await prisma.asset.deleteMany({});
+  await prisma.calendarEvent.deleteMany({});
+  await prisma.beat.deleteMany({});
+  
+  await prisma.monthlyGoal.deleteMany({});
+  await prisma.quarterlyGoal.deleteMany({});
+  await prisma.annualGoal.deleteMany({});
+  
+  await prisma.actionItem.deleteMany({});
+  await prisma.weeklyReview.deleteMany({});
+  await prisma.secondaryTask.deleteMany({});
+  await prisma.missionControl.deleteMany({});
+  await prisma.activityLog.deleteMany({});
+  await prisma.dailyLog.deleteMany({});
+  await prisma.knowledgeEntry.deleteMany({});
+  await prisma.notification.deleteMany({});
+  
+  res.json({ success: true });
+});
+
 export default router;

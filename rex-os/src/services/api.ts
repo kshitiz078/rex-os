@@ -83,6 +83,10 @@ export const addProjectTask = (projectId: number, data: unknown) =>
   request<unknown>(`/projects/${projectId}/tasks`, { method: "POST", body: JSON.stringify(data) });
 export const toggleProjectTask = (projectId: number, taskId: number) =>
   request<unknown>(`/projects/${projectId}/tasks/${taskId}/toggle`, { method: "PATCH" });
+export const editProjectTask = (projectId: number, taskId: number, data: unknown) =>
+  request<unknown>(`/projects/${projectId}/tasks/${taskId}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteProjectTask = (projectId: number, taskId: number) =>
+  request<{ success: boolean }>(`/projects/${projectId}/tasks/${taskId}`, { method: "DELETE" });
 export const toggleMilestone = (projectId: number, milestoneId: number) =>
   request<unknown>(`/projects/${projectId}/milestones/${milestoneId}/toggle`, { method: "PATCH" });
 
@@ -103,6 +107,8 @@ export const updateMonthlyGoalProgress = (id: number, current: number) =>
   request<unknown>(`/goals/monthly/${id}/progress`, { method: "PATCH", body: JSON.stringify({ current }) });
 export const createMonthlyGoal = (data: unknown) =>
   request<unknown>("/goals/monthly", { method: "POST", body: JSON.stringify(data) });
+export const updateMonthlyGoal = (id: number, data: unknown) =>
+  request<unknown>(`/goals/monthly/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 export const deleteMonthlyGoal = (id: number) =>
   request<{ success: boolean }>(`/goals/monthly/${id}`, { method: "DELETE" });
 
@@ -191,6 +197,8 @@ export const deleteCalendarEvent = (id: number) =>
 export const getSettings = () => request<unknown>("/settings");
 export const updateSettings = (data: unknown) =>
   request<unknown>("/settings", { method: "PUT", body: JSON.stringify(data) });
+export const resetPortal = () =>
+  request<{ success: boolean }>("/settings/reset", { method: "POST" });
 
 // ─── Google Backup ───────────────────────────────────────────────────────────
 export const getBackupStatus = () =>

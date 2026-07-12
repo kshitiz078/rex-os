@@ -3,23 +3,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   FolderKanban, Activity, Calendar, Target, Zap, Clock, CheckCircle2,
-  X, Plus, AlertTriangle, TrendingUp, ChevronRight
+  X, Plus, AlertTriangle, TrendingUp, ChevronRight, Pencil, Trash2, Tag, User
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
-import type { Project } from "../context/AppContext";
+import type { Project, ProjectTask } from "../context/AppContext";
 
 function ProjectDrawer({ project, onClose }: { project: Project; onClose: () => void }) {
-  const { toggleProjectTask, addProjectTask, updateProject } = useAppContext();
+  const { toggleProjectTask, addProjectTask, editProjectTask, deleteProjectTask, updateProject } = useAppContext();
   const [newTaskText, setNewTaskText] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(project.notes);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
+  const [editTaskText, setEditTaskText] = useState("");
+  const [editTaskPriority, setEditTaskPriority] = useState<"High"|"Medium"|"Low">("Medium");
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskText.trim()) return;
     addProjectTask(project.id, { text: newTaskText, completed: false, priority: newTaskPriority });
     setNewTaskText("");
+  };
+
+  const handleEditTaskSave = () => {
+    if (!editingTask) return;
+    editProjectTask(project.id, editingTask.id, { text: editTaskText, completed: editingTask.completed, priority: editTaskPriority });
+    setEditingTask(null);
+  };
+
+  const handleDeleteTask = (taskId: number) => {
+    if (window.confirm('Delete this task?')) deleteProjectTask(project.id, taskId);
   };
 
   const handleSaveNotes = () => {
@@ -56,9 +69,11 @@ function ProjectDrawer({ project, onClose }: { project: Project; onClose: () => 
               </span>
             </div>
             <p className="text-muted-foreground mt-1">{project.description}</p>
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {project.deadline}</span>
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {project.timeInvested}h invested</span>
+              {project.category && <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> {project.category}</span>}
+              {project.owner && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {project.owner}</span>}
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-secondary rounded-lg transition-colors ml-4 shrink-0">
@@ -95,23 +110,48 @@ function ProjectDrawer({ project, onClose }: { project: Project; onClose: () => 
 
           {/* Tasks */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">Tasks</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tasks</h4>
+              <span className="text-xs text-muted-foreground">{project.tasks.filter(t => t.completed).length}/{project.tasks.length} done</span>
+            </div>
             <div className="space-y-1.5 mb-3">
               {project.tasks.map(task => (
-                <div
-                  key={task.id}
-                  onClick={() => toggleProjectTask(project.id, task.id)}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer group"
-                >
-                  {task.completed
-                    ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary shrink-0 transition-colors" />
-                  }
-                  <span className={`text-sm font-medium flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>{task.text}</span>
-                  {task.priority && (
-                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase ${priorityColors[task.priority]}`}>
-                      {task.priority}
-                    </span>
+                <div key={task.id} className="group flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
+                  {editingTask?.id === task.id ? (
+                    <div className="flex-1 flex gap-2">
+                      <input value={editTaskText} onChange={e => setEditTaskText(e.target.value)}
+                        className="flex-1 bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        onKeyDown={e => { if (e.key === 'Enter') handleEditTaskSave(); if (e.key === 'Escape') setEditingTask(null); }}
+                        autoFocus
+                      />
+                      <select value={editTaskPriority} onChange={e => setEditTaskPriority(e.target.value as any)}
+                        className="bg-background border border-border rounded-lg px-2 text-xs focus:outline-none">
+                        <option>High</option><option>Medium</option><option>Low</option>
+                      </select>
+                      <button onClick={handleEditTaskSave} className="px-2 py-1 bg-primary text-primary-foreground rounded text-xs font-bold">Save</button>
+                      <button onClick={() => setEditingTask(null)} className="px-2 py-1 bg-secondary rounded text-xs">✕</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div onClick={() => toggleProjectTask(project.id, task.id)} className="flex items-center gap-3 flex-1 cursor-pointer">
+                        {task.completed
+                          ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary shrink-0 transition-colors" />
+                        }
+                        <span className={`text-sm font-medium flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>{task.text}</span>
+                        {task.priority && (
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase ${priorityColors[task.priority]}`}>
+                            {task.priority}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingTask(task); setEditTaskText(task.text); setEditTaskPriority(task.priority); }}
+                          className="p-1 hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteTask(task.id)}
+                          className="p-1 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </>
                   )}
                 </div>
               ))}
@@ -176,6 +216,10 @@ export default function Projects() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("General");
+  const [owner, setOwner] = useState("CEO");
+  const [tagsInput, setTagsInput] = useState("");
+  const [estimatedEffort, setEstimatedEffort] = useState("");
   const [priority, setPriority] = useState("High");
   const [deadline, setDeadline] = useState("");
   const [milestonesInput, setMilestonesInput] = useState("");
@@ -184,12 +228,14 @@ export default function Projects() {
     e.preventDefault();
     if (!name.trim()) return;
     const milestones = milestonesInput.split(",").map(m => m.trim()).filter(Boolean).map(text => ({ text, completed: false }));
+    const tags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
     addProject({
-      name, description, priority,
+      name, description, priority, category, owner, tags: tags as any, estimatedEffort: estimatedEffort || "TBD",
       deadline: deadline || "TBD",
       milestones: milestones.length > 0 ? milestones : [{ text: "Kickoff project", completed: false }],
     });
     setName(""); setDescription(""); setPriority("High"); setDeadline(""); setMilestonesInput("");
+    setCategory("General"); setOwner("CEO"); setTagsInput(""); setEstimatedEffort("");
     setIsModalOpen(false);
   };
 
@@ -352,6 +398,18 @@ export default function Projects() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+                    <input type="text" value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. Music, Business"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Owner</label>
+                    <input type="text" value={owner} onChange={e => setOwner(e.target.value)} placeholder="e.g. CEO, Producer"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Priority</label>
                     <select value={priority} onChange={e => setPriority(e.target.value)}
                       className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
@@ -361,6 +419,18 @@ export default function Projects() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Deadline</label>
                     <input type="text" value={deadline} onChange={e => setDeadline(e.target.value)} placeholder="e.g. Q4 2026"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags (comma separated)</label>
+                    <input type="text" value={tagsInput} onChange={e => setTagsInput(e.target.value)} placeholder="music, ep, priority"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Estimated Effort</label>
+                    <input type="text" value={estimatedEffort} onChange={e => setEstimatedEffort(e.target.value)} placeholder="e.g. 2 weeks, 40h"
                       className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                 </div>

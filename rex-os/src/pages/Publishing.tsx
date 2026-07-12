@@ -46,27 +46,57 @@ export default function Publishing() {
   const [status, setStatus] = useState("");
   const [beatId, setBeatId] = useState("");
 
+  const [editingCard, setEditingCard] = useState<any>(null);
+
   // Drag state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
   const handleAddCardClick = (colId: string) => {
     setTargetColumn(colId);
+    setEditingCard(null);
+    setTitle(""); setPlatform("youtube"); setPriority("Medium");
+    setPublishDate(""); setEstTime(""); setStatus(""); setBeatId("");
     setIsModalOpen(true);
   };
+
+  const handleEditClick = (card: any) => {
+    setEditingCard(card);
+    setTargetColumn(card.columnId);
+    setTitle(card.title);
+    setPlatform(card.platform);
+    setPriority(card.priority);
+    setPublishDate(card.publishDate);
+    setEstTime(card.estTime);
+    setStatus(card.status);
+    setBeatId(card.beatId?.toString() || "");
+    setIsModalOpen(true);
+  };
+
+  const { editPublishingCard } = useAppContext();
 
   const handleCreateCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    addPublishingCard({
-      columnId: targetColumn, title, platform, priority,
-      publishDate: publishDate || "TBD",
-      estTime: estTime || "15m",
-      status: status || "Idea",
-      beatId: beatId || undefined,
-    });
-    setTitle(""); setPlatform("youtube"); setPriority("Medium");
-    setPublishDate(""); setEstTime(""); setStatus(""); setBeatId("");
+
+    if (editingCard) {
+      editPublishingCard(editingCard.id, {
+        columnId: targetColumn, title, platform, priority,
+        publishDate: publishDate || "TBD",
+        estTime: estTime || "15m",
+        status: status || "Idea",
+        beatId: beatId || undefined,
+      });
+    } else {
+      addPublishingCard({
+        columnId: targetColumn, title, platform, priority,
+        publishDate: publishDate || "TBD",
+        estTime: estTime || "15m",
+        status: status || "Idea",
+        beatId: beatId || undefined,
+      });
+    }
+    
     setIsModalOpen(false);
   };
 
@@ -129,13 +159,16 @@ export default function Publishing() {
 
                 {/* Cards */}
                 <div className="flex flex-col gap-3 p-3 overflow-y-auto max-h-[calc(100vh-280px)] flex-1">
-                  {columnCards.map(card => (
+                  {columnCards.map(card => {
+                    const isOverdue = card.columnId !== 'published' && card.publishDate !== 'TBD' && new Date(card.publishDate) < new Date();
+                    return (
                     <div
                       key={card.id}
                       draggable
                       onDragStart={() => setDraggedId(card.id)}
                       onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}
-                      className={`group border border-border/50 bg-card/80 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-grab active:cursor-grabbing active:opacity-70 active:scale-95 ${draggedId === card.id ? 'opacity-40' : ''}`}
+                      onDoubleClick={() => handleEditClick(card)}
+                      className={`group border ${isOverdue ? 'border-red-500/50 shadow-red-500/10' : 'border-border/50'} bg-card/80 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-grab active:cursor-grabbing active:opacity-70 active:scale-95 ${draggedId === card.id ? 'opacity-40' : ''}`}
                     >
                       <div className="p-3">
                         <div className="flex items-start gap-2 mb-2.5">
@@ -161,8 +194,8 @@ export default function Publishing() {
                           </span>
                         </div>
 
-                        <div className="flex justify-between text-[10px] text-muted-foreground font-medium pt-2 border-t border-border/20">
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{card.publishDate}</span>
+                        <div className={`flex justify-between text-[10px] font-medium pt-2 border-t ${isOverdue ? 'border-red-500/20 text-red-500' : 'border-border/20 text-muted-foreground'}`}>
+                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{card.publishDate} {isOverdue && <span className="font-bold">(Overdue)</span>}</span>
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{card.estTime}</span>
                         </div>
 
@@ -177,7 +210,8 @@ export default function Publishing() {
                         </select>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
 
                   <button
                     onClick={() => handleAddCardClick(column.id)}
@@ -200,7 +234,7 @@ export default function Publishing() {
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle className="text-2xl font-extrabold tracking-tight">Add Content Item</CardTitle>
+              <CardTitle className="text-2xl font-extrabold tracking-tight">{editingCard ? 'Edit Content Item' : 'Add Content Item'}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateCard} className="space-y-4">
@@ -258,7 +292,7 @@ export default function Publishing() {
                   </select>
                 </div>
                 <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold py-2.5 rounded-lg shadow-lg transition-all mt-2">
-                  Create Card
+                  {editingCard ? 'Save Changes' : 'Create Card'}
                 </button>
               </form>
             </CardContent>

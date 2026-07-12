@@ -5,8 +5,10 @@ import { Target, Calendar, Zap, Flag, Plus, X, Trash2 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 
 export default function MonthlyReview() {
-  const { monthlyGoals, addGoal, updateGoalProgress, deleteGoal } = useAppContext();
+  const { monthlyGoals, addGoal, updateGoalProgress, updateGoal, deleteGoal } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   // New goal form
   const [title, setTitle] = useState("");
@@ -19,14 +21,34 @@ export default function MonthlyReview() {
   const handleAddGoal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    addGoal({
-      title, category, current, total, unit, type: type as "monthly" | "quarterly" | "annual",
-    });
+    if (editingGoalId) {
+      updateGoal(editingGoalId, { title, category, current, total, unit, type: type as any });
+    } else {
+      addGoal({ title, category, current, total, unit, type: type as "monthly" | "quarterly" | "annual" });
+    }
     setTitle(""); setCategory("Growth"); setCurrent(0); setTotal(10); setUnit("beats");
+    setEditingGoalId(null);
     setIsModalOpen(false);
   };
 
-  const getGoalsByType = (t: string) => monthlyGoals.filter(g => g.type === t);
+  const handleEditClick = (goal: any) => {
+    setEditingGoalId(goal.id);
+    setTitle(goal.title);
+    setCategory(goal.category);
+    setCurrent(goal.current);
+    setTotal(goal.total);
+    setUnit(goal.unit);
+    setType(goal.type);
+    setIsModalOpen(true);
+  };
+
+  const openNewModal = () => {
+    setEditingGoalId(null);
+    setTitle(""); setCategory("Growth"); setCurrent(0); setTotal(10); setUnit("beats");
+    setIsModalOpen(true);
+  };
+
+  const getGoalsByType = (t: string) => monthlyGoals.filter(g => g.type === t && (showArchived || g.progress < 100));
 
   const renderGoalSection = (title: string, goals: any[], icon: any) => (
     <div className="space-y-4 mb-8">
@@ -41,10 +63,18 @@ export default function MonthlyReview() {
             <Card key={goal.id} className="border-border/50 hover:shadow-lg transition-all duration-300">
               <CardContent className="p-5 relative group">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-secondary px-2 py-0.5 rounded-full text-muted-foreground">
-                    {goal.category}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-secondary px-2 py-0.5 rounded-full text-muted-foreground">
+                      {goal.category}
+                    </span>
+                    {goal.progress >= 100 && (
+                      <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        Completed
+                      </span>
+                    )}
+                  </div>
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <button onClick={() => handleEditClick(goal)} className="text-[10px] font-bold text-muted-foreground hover:text-primary mr-1">Edit</button>
                     <button onClick={() => deleteGoal(goal.id)} className="p-1 text-muted-foreground hover:text-red-500 rounded"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 </div>
@@ -89,12 +119,18 @@ export default function MonthlyReview() {
           </h1>
           <p className="text-muted-foreground mt-1 text-lg font-medium">Monthly, Quarterly, and Annual Targets.</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> New Goal
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm font-bold text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="rounded text-primary focus:ring-primary" />
+            Show Completed
+          </label>
+          <button
+            onClick={openNewModal}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> New Goal
+          </button>
+        </div>
       </div>
 
       {renderGoalSection("Monthly Goals", getGoalsByType("monthly"), <Zap className="w-5 h-5 text-orange-500" />)}
@@ -109,7 +145,7 @@ export default function MonthlyReview() {
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle className="text-xl font-extrabold">Add New Goal</CardTitle>
+              <CardTitle className="text-xl font-extrabold">{editingGoalId ? 'Edit Goal' : 'Add New Goal'}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleAddGoal} className="space-y-4">
@@ -128,12 +164,16 @@ export default function MonthlyReview() {
                       <option value="annual">Annual</option>
                     </select>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 relative">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                      <option>Growth</option><option>Financial</option><option>Production</option><option>Health</option>
-                    </select>
+                    <input type="text" list="categories" value={category} onChange={e => setCategory(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    <datalist id="categories">
+                      <option value="Growth" />
+                      <option value="Financial" />
+                      <option value="Production" />
+                      <option value="Health" />
+                    </datalist>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -154,7 +194,7 @@ export default function MonthlyReview() {
                   </div>
                 </div>
                 <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold py-2.5 rounded-lg shadow-lg transition-all mt-2">
-                  Create Goal
+                  {editingGoalId ? 'Save Changes' : 'Create Goal'}
                 </button>
               </form>
             </CardContent>

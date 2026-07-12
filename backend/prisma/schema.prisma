@@ -27,11 +27,17 @@ model Beat {
   mixStatus     String   @default("Not Started")
   masterStatus  String   @default("Not Started")
   videoStatus   String   @default("Not Started")
-  // Platform booleans stored as individual columns
-  platYoutube   Boolean  @default(false)
-  platSpotify   Boolean  @default(false)
-  platBeatstars Boolean  @default(false)
-  platAirbit    Boolean  @default(false)
+  timeSignature String   @default("4/4")
+  coverArt      String   @default("") // Base64 image data
+  // Platform statuses stored as individual strings
+  platYoutube    String  @default("Draft")
+  platSpotify    String  @default("Draft")
+  platBeatstars  String  @default("Draft")
+  platAirbit     String  @default("Draft")
+  platAppleMusic String  @default("Draft")
+  platSoundcloud String  @default("Draft")
+  platInstagram  String  @default("Draft")
+  platTiktok     String  @default("Draft")
   tags          String   @default("[]") // JSON array stored as string
   notes         String   @default("")
   dateCreated   String
@@ -48,6 +54,10 @@ model Project {
   id             Int           @id @default(autoincrement())
   name           String
   description    String
+  category       String        @default("General")
+  owner          String        @default("CEO")
+  tags           String        @default("[]") // JSON array stored as string
+  estimatedEffort String       @default("TBD")
   progress       Int           @default(0)
   status         String        @default("Active")
   statusColor    String        @default("text-emerald-500 bg-emerald-500/10")
@@ -238,12 +248,12 @@ model KnowledgeEntry {
 // ASSETS
 // ============================================================
 model Asset {
-  id        Int     @id @default(autoincrement())
-  name      String
-  type      String
-  size      String
-  format    String
-  beatId    String?
+  id         Int     @id @default(autoincrement())
+  name       String
+  type       String
+  driveLink  String  @default("")
+  previewUrl String  @default("")
+  beatId     String?
   beat      Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
   projectId Int?
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)

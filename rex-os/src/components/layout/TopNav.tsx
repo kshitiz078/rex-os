@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Bell, X, CheckCheck, Music, FolderKanban, Target, UploadCloud, Calendar, BookOpen, ClipboardList, Server } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
@@ -17,7 +17,7 @@ export default function TopNav() {
   const navigate = useNavigate();
   const {
     beats, projects, publishingCards, monthlyGoals, calendarEvents,
-    notifications, markNotificationRead, markAllNotificationsRead,
+    notifications, markNotificationRead, markAllNotificationsRead, addNotification,
     knowledgeEntries, dailyLogs
   } = useAppContext();
 
@@ -70,7 +70,7 @@ export default function TopNav() {
   }, []);
 
   // Build search results
-  const searchResults: SearchResult[] = [
+  const searchResults = useMemo<SearchResult[]>(() => [
     ...beats.map(b => ({ id: b.id, title: b.name, subtitle: `${b.genre} · ${b.bpm} BPM · ${b.status}`, type: "Beat", href: "/beat-library", icon: Music })),
     ...projects.map(p => ({ id: String(p.id), title: p.name, subtitle: `${p.status} · ${p.progress}% complete`, type: "Project", href: "/projects", icon: FolderKanban })),
     ...monthlyGoals.map(g => ({ id: String(g.id), title: g.title, subtitle: `${g.current}/${g.total} · ${g.progress}%`, type: "Goal", href: "/monthly-review", icon: Target })),
@@ -78,7 +78,7 @@ export default function TopNav() {
     ...calendarEvents.map(e => ({ id: String(e.id), title: e.title, subtitle: `${e.date} · ${e.platform}`, type: "Calendar", href: "/calendar", icon: Calendar })),
     ...knowledgeEntries.map(e => ({ id: String(e.id), title: e.title, subtitle: `${e.category} · ${e.tags.join(', ')}`, type: "Knowledge", href: "/knowledge-vault", icon: BookOpen })),
     ...dailyLogs.map(l => ({ id: String(l.id), title: l.task, subtitle: `${l.date} · ${l.category}`, type: "Log", href: "/daily-log", icon: ClipboardList })),
-  ];
+  ], [beats, projects, monthlyGoals, publishingCards, calendarEvents, knowledgeEntries, dailyLogs]);
 
   const filtered = searchQuery.trim()
     ? searchResults.filter(r =>
@@ -95,6 +95,25 @@ export default function TopNav() {
   };
 
   const notifIcons = { warning: "⚠️", info: "ℹ️", success: "✅", urgent: "🚨" };
+
+  const handleRemindLater = (e: React.MouseEvent, notif: any) => {
+    e.stopPropagation();
+    markNotificationRead(notif.id);
+    // Simulate remind later by scheduling a new notification in 1 hour
+    setTimeout(() => {
+      addNotification({
+        title: `Reminder: ${notif.title}`,
+        description: notif.description,
+        type: notif.type,
+      });
+    }, 60 * 60 * 1000);
+    // Give immediate feedback
+    addNotification({
+      title: 'Reminder Set',
+      description: `We'll remind you about "${notif.title}" in 1 hour.`,
+      type: 'info'
+    });
+  };
 
   return (
     <>
@@ -155,6 +174,11 @@ export default function TopNav() {
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs font-bold ${notif.isRead ? '' : 'text-foreground'}`}>{notif.title}</p>
                           <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{notif.description}</p>
+                          {!notif.isRead && (
+                            <div className="mt-2 flex gap-2">
+                              <button onClick={(e) => handleRemindLater(e, notif)} className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors border border-border/50 rounded px-2 py-0.5 bg-background">Remind in 1h</button>
+                            </div>
+                          )}
                         </div>
                         {!notif.isRead && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />}
                       </div>

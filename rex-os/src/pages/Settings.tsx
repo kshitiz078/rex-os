@@ -5,7 +5,10 @@ import { useAppContext } from "../context/AppContext";
 import * as api from "../services/api";
 
 export default function Settings() {
-  const { appSettings, updateSettings } = useAppContext();
+  const { appSettings, updateSettings, resetPortal } = useAppContext();
+  const [resetInput, setResetInput] = useState("");
+  const [showResetPortal, setShowResetPortal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [backupStatus, setBackupStatus] = useState({
     lastBackupAt: appSettings.lastBackupAt || null,
     backupStatus: appSettings.backupStatus || "never",
@@ -67,12 +70,27 @@ export default function Settings() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
-      const keysToKeep = ["rex_app_settings"];
-      Object.keys(localStorage).filter(k => k.startsWith("rex_") && !keysToKeep.includes(k))
-        .forEach(k => localStorage.removeItem(k));
-      window.location.reload();
+  const handleReset = async () => {
+    if (resetInput !== 'RESET') return;
+    setIsResetting(true);
+    try {
+      if (window.confirm('Download a backup first?')) handleExport();
+      await resetPortal();
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleResetToDefaults = () => {
+    if (window.confirm('Reset all settings to defaults? Your data will not be affected.')) {
+      updateSettings({
+        theme: 'system',
+        defaultFocusMinutes: 25,
+        defaultBreakMinutes: 5,
+        defaultUploadPlatforms: ['youtube', 'beatstars'],
+        notificationsEnabled: true,
+        publishingStreakGoal: 7,
+      });
     }
   };
 
@@ -303,14 +321,49 @@ export default function Settings() {
               <Download className="w-4 h-4" /> Export
             </button>
           </div>
-          <div className="flex items-center justify-between p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+
+          <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-xl">
             <div>
-              <p className="text-sm font-semibold text-red-600">Reset All Data</p>
-              <p className="text-xs text-muted-foreground">Permanently delete all data. Cannot be undone.</p>
+              <p className="text-sm font-semibold">Reset to Defaults</p>
+              <p className="text-xs text-muted-foreground">Restore all settings to their defaults. Your data is unaffected.</p>
             </div>
-            <button onClick={handleReset} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white transition-colors">
-              <RotateCcw className="w-4 h-4" /> Reset
+            <button onClick={handleResetToDefaults} className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-lg font-bold text-sm hover:bg-secondary/80 transition-colors">
+              <RotateCcw className="w-4 h-4" /> Reset Settings
             </button>
+          </div>
+
+          {/* Reset Portal */}
+          <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-red-600">Reset Portal</p>
+                <p className="text-xs text-muted-foreground">Permanently delete ALL data from REX OS. Cannot be undone.</p>
+              </div>
+              <button onClick={() => setShowResetPortal(v => !v)} className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-500 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors">
+                <RotateCcw className="w-4 h-4" /> {showResetPortal ? 'Cancel' : 'Open'}
+              </button>
+            </div>
+            {showResetPortal && (
+              <div className="space-y-3 pt-2 border-t border-red-500/20">
+                <p className="text-xs text-red-500 font-semibold">Type <strong>RESET</strong> below to confirm. This will wipe all beats, projects, goals, and logs.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={resetInput}
+                    onChange={e => setResetInput(e.target.value)}
+                    placeholder="Type RESET to confirm"
+                    className="flex-1 px-3 py-2 bg-background border border-red-500/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  />
+                  <button
+                    onClick={handleReset}
+                    disabled={resetInput !== 'RESET' || isResetting}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-600 transition-colors"
+                  >
+                    {isResetting ? 'Resetting...' : 'Delete All'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

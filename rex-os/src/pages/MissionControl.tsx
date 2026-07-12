@@ -45,6 +45,7 @@ export default function MissionControl() {
   const [focusSession, setFocusSession] = useState(1);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     setTimerSeconds(appSettings.defaultFocusMinutes * 60);
@@ -52,18 +53,30 @@ export default function MissionControl() {
 
   useEffect(() => {
     if (timerRunning) {
+      setTimerSeconds(currentSeconds => {
+        if (!endTimeRef.current) {
+          endTimeRef.current = Date.now() + currentSeconds * 1000;
+        }
+        return currentSeconds;
+      });
+
       intervalRef.current = setInterval(() => {
-        setTimerSeconds(s => {
-          if (s <= 1) {
-            setTimerRunning(false);
-            setFocusSession(p => p + 1);
-            addActivity({ type: 'focus_session', title: 'Focus Session Complete', description: `${appSettings.defaultFocusMinutes}-min deep work session completed`, icon: 'clock', color: 'text-blue-500 bg-blue-500/10' });
-            return appSettings.defaultFocusMinutes * 60;
-          }
-          return s - 1;
-        });
+        if (!endTimeRef.current) return;
+        const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+        setTimerSeconds(remaining);
+        
+        if (remaining <= 0) {
+          setTimerRunning(false);
+          setFocusSession(p => p + 1);
+          addActivity({ type: 'focus_session', title: 'Focus Session Complete', description: `${appSettings.defaultFocusMinutes}-min deep work session completed`, icon: 'clock', color: 'text-blue-500 bg-blue-500/10' });
+          endTimeRef.current = null;
+          setTimerSeconds(appSettings.defaultFocusMinutes * 60);
+        }
       }, 1000);
-    } else if (intervalRef.current) clearInterval(intervalRef.current);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      endTimeRef.current = null;
+    }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [timerRunning, appSettings.defaultFocusMinutes, addActivity]);
 
@@ -78,6 +91,7 @@ export default function MissionControl() {
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskText.trim()) return;
+    if (newTaskMins !== undefined && newTaskMins < 0) return;
     addSecondaryTask({
       text: newTaskText,
       priority: newTaskPriority,
@@ -95,7 +109,6 @@ export default function MissionControl() {
   const totalCount = secondaryTasks.length;
   const taskProgress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const completedTasks = secondaryTasks.filter(t => t.completed);
-  const pendingTasks = secondaryTasks.filter(t => !t.completed);
 
   const priorityColors = {
     High: "bg-red-500/10 text-red-600 border-red-500/20",
@@ -111,10 +124,10 @@ export default function MissionControl() {
   const handleDragEnter = (index: number) => { dragOverItem.current = index; };
   const handleDragEnd = () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
-    const pending = [...pendingTasks];
-    const [moved] = pending.splice(dragItem.current, 1);
-    pending.splice(dragOverItem.current, 0, moved);
-    reorderSecondaryTasks([...pending, ...completedTasks]);
+    const tasks = [...secondaryTasks];
+    const [moved] = tasks.splice(dragItem.current, 1);
+    tasks.splice(dragOverItem.current, 0, moved);
+    reorderSecondaryTasks(tasks);
     dragItem.current = null;
     dragOverItem.current = null;
   };
@@ -265,7 +278,7 @@ export default function MissionControl() {
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>
                       </select>
-                      <input type="number" placeholder="Est. mins" value={newTaskMins || ""}
+                      <input type="number" min="1" placeholder="Est. mins" value={newTaskMins || ""}
                         onChange={e => setNewTaskMins(e.target.value ? parseInt(e.target.value) : undefined)}
                         className="bg-background border border-border px-2 py-1 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                       />
@@ -279,7 +292,7 @@ export default function MissionControl() {
 
                 <CardContent className="p-0">
                   <div className="flex flex-col">
-                    {pendingTasks.map((task, index) => (
+                    {secondaryTasks.map((task, index) => (
                       <div
                         key={task.id}
                         draggable
@@ -287,14 +300,18 @@ export default function MissionControl() {
                         onDragEnter={() => handleDragEnter(index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={e => e.preventDefault()}
-                        className="flex items-start gap-2 p-3 border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors cursor-grab active:cursor-grabbing group/task"
+                        className={`flex items-start gap-2 p-3 border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors cursor-grab active:cursor-grabbing group/task ${task.completed ? 'opacity-60' : ''}`}
                       >
                         <GripVertical className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/task:text-muted-foreground mt-0.5 shrink-0 transition-colors" />
                         <button onClick={() => toggleSecondaryTask(task.id)} className="mt-0.5 shrink-0">
-                          <Circle className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+                          {task.completed ? (
+                            <CheckCircle2 className="w-4 h-4 text-primary transition-colors" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+                          )}
                         </button>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium block">{task.text}</span>
+                          <span className={`text-sm font-medium block ${task.completed ? 'line-through text-muted-foreground' : ''}`}>{task.text}</span>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             {task.priority && (
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${priorityColors[task.priority]}`}>
@@ -313,10 +330,10 @@ export default function MissionControl() {
                         </button>
                       </div>
                     ))}
-                    {pendingTasks.length === 0 && (
+                    {secondaryTasks.length === 0 && (
                       <div className="p-6 text-center text-muted-foreground">
                         <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-500/50" />
-                        <p className="text-xs font-medium">All tasks done!</p>
+                        <p className="text-xs font-medium">No tasks added yet!</p>
                       </div>
                     )}
                   </div>
