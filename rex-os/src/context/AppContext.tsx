@@ -48,6 +48,13 @@ export interface Project {
   priority: string;
   priorityColor: string;
   deadline: string;
+  startDate: string;
+  estimatedCompletion: string;
+  linkedGoals: string; // JSON array of goal IDs/Titles
+  deliverables: string; // JSON array of deliverable texts
+  links: string; // JSON array of { name, url }
+  files: string; // JSON array of { name, url/path }
+  activities: string; // JSON array of { timestamp, text }
   milestones: { text: string; completed: boolean }[];
   recentActivity: string;
   tasks: ProjectTask[];
@@ -116,6 +123,7 @@ export interface SecondaryTask {
   priority?: 'High' | 'Medium' | 'Low';
   estimatedMinutes?: number;
   project?: string;
+  energy?: 'High' | 'Medium' | 'Low';
 }
 
 export interface WeeklyReviewData {
@@ -232,7 +240,7 @@ export interface AppContextType {
 
   // Projects
   projects: Project[];
-  addProject: (project: Omit<Project, "id" | "progress" | "status" | "statusColor" | "priorityColor" | "recentActivity" | "tasks" | "notes" | "timeInvested" | "health">) => void;
+  addProject: (project: Omit<Project, "id" | "progress" | "status" | "statusColor" | "priorityColor" | "recentActivity" | "tasks" | "notes" | "timeInvested" | "health" | "activities">) => void;
   updateProjectProgress: (id: number, progress: number) => void;
   updateProject: (project: Project) => void;
   toggleProjectTask: (projectId: number, taskId: number) => void;
@@ -368,6 +376,7 @@ const initialProjects: Project[] = [
     category: "General", owner: "CEO", tags: ["music", "ep"], estimatedEffort: "2 months",
     status: "Active", statusColor: "text-emerald-500 bg-emerald-500/10",
     priority: "High", priorityColor: "text-orange-500 bg-orange-500/10", deadline: "Q3 2026",
+    startDate: "2026-06-01", estimatedCompletion: "2026-09-30", linkedGoals: "[]", deliverables: "[]", links: "[]", files: "[]", activities: "[]",
     milestones: [
       { text: "Finish 'Neon City' EP", completed: true },
       { text: "Shoot music video", completed: false },
@@ -387,6 +396,7 @@ const initialProjects: Project[] = [
     category: "Business", owner: "Tech Lead", tags: ["web", "ecommerce"], estimatedEffort: "1 month",
     progress: 45, status: "In Progress", statusColor: "text-blue-500 bg-blue-500/10",
     priority: "High", priorityColor: "text-orange-500 bg-orange-500/10", deadline: "Aug 15, 2026",
+    startDate: "2026-07-01", estimatedCompletion: "2026-08-15", linkedGoals: "[]", deliverables: "[]", links: "[]", files: "[]", activities: "[]",
     milestones: [
       { text: "Design UI/UX", completed: true },
       { text: "Integrate Stripe", completed: true },
@@ -405,6 +415,7 @@ const initialProjects: Project[] = [
     category: "Marketing", owner: "Creator", tags: ["youtube", "brand"], estimatedEffort: "Ongoing",
     progress: 85, status: "Ongoing", statusColor: "text-primary bg-primary/10",
     priority: "Medium", priorityColor: "text-yellow-600 bg-yellow-500/10", deadline: "Continuous",
+    startDate: "2026-01-01", estimatedCompletion: "Continuous", linkedGoals: "[]", deliverables: "[]", links: "[]", files: "[]", activities: "[]",
     milestones: [
       { text: "Reach 10k YouTube Subs", completed: false },
       { text: "Launch weekly newsletter", completed: true },
@@ -566,6 +577,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       timeInvested: typeof p.timeInvested === "number" ? p.timeInvested : 0,
       health: p.health || "On Track",
       deadline: p.deadline || "TBD",
+      startDate: p.startDate || "",
+      estimatedCompletion: p.estimatedCompletion || "",
+      linkedGoals: p.linkedGoals || "[]",
+      deliverables: p.deliverables || "[]",
+      links: p.links || "[]",
+      files: p.files || "[]",
+      activities: p.activities || "[]",
       priority: p.priority || "Medium",
       priorityColor: p.priorityColor || (p.priority === "High" ? "text-orange-500 bg-orange-500/10" : "text-yellow-600 bg-yellow-500/10"),
       statusColor: p.statusColor || "text-emerald-500 bg-emerald-500/10",
@@ -792,7 +810,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ============================================================
   // PROJECT OPERATIONS
   // ============================================================
-  const addProject = useCallback((project: Omit<Project, "id" | "progress" | "status" | "statusColor" | "priorityColor" | "recentActivity" | "tasks" | "notes" | "timeInvested" | "health">) => {
+  const addProject = useCallback((project: Omit<Project, "id" | "progress" | "status" | "statusColor" | "priorityColor" | "recentActivity" | "tasks" | "notes" | "timeInvested" | "health" | "activities">) => {
     const newProject: Project = {
       ...project,
       id: Date.now(),
@@ -805,6 +823,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notes: "",
       timeInvested: 0,
       health: "On Track",
+      activities: JSON.stringify([{ timestamp: new Date().toISOString(), text: "Project created" }]),
     };
     setProjects(prev => [...prev, newProject]);
     api.createProject(newProject).then(res => {

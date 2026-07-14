@@ -8,6 +8,8 @@ const mapProject = (p: {
   category: string; owner: string; tags: string; estimatedEffort: string;
   statusColor: string; priority: string; priorityColor: string; deadline: string;
   recentActivity: string; notes: string; timeInvested: number; health: string;
+  startDate: string; estimatedCompletion: string; linkedGoals: string;
+  deliverables: string; links: string; files: string; activities: string;
   createdAt: Date; updatedAt: Date;
   tasks: { id: number; text: string; completed: boolean; priority: string; dueDate: string | null }[];
   milestones: { id: number; text: string; completed: boolean }[];
@@ -29,6 +31,13 @@ const mapProject = (p: {
   notes: p.notes,
   timeInvested: p.timeInvested,
   health: p.health,
+  startDate: p.startDate,
+  estimatedCompletion: p.estimatedCompletion,
+  linkedGoals: p.linkedGoals,
+  deliverables: p.deliverables,
+  links: p.links,
+  files: p.files,
+  activities: p.activities,
   tasks: p.tasks,
   milestones: p.milestones,
 });
@@ -44,7 +53,7 @@ router.get("/", async (_req, res) => {
 
 // POST /api/projects
 router.post("/", async (req, res) => {
-  const { name, description, category, owner, tags, estimatedEffort, priority, deadline, milestones } = req.body;
+  const { name, description, category, owner, tags, estimatedEffort, priority, deadline, milestones, startDate, estimatedCompletion, linkedGoals, deliverables, links, files, activities } = req.body;
   const project = await prisma.project.create({
     data: {
       name, description, priority,
@@ -54,6 +63,13 @@ router.post("/", async (req, res) => {
       estimatedEffort: estimatedEffort || "TBD",
       priorityColor: priority === "High" ? "text-orange-500 bg-orange-500/10" : "text-yellow-600 bg-yellow-500/10",
       deadline: deadline || "TBD",
+      startDate: startDate || "",
+      estimatedCompletion: estimatedCompletion || "",
+      linkedGoals: linkedGoals || "[]",
+      deliverables: deliverables || "[]",
+      links: links || "[]",
+      files: files || "[]",
+      activities: activities || "[]",
       milestones: {
         create: (milestones || []).map((m: string) => ({ text: m, completed: false })),
       },
@@ -70,12 +86,12 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const id = Number(req.params.id);
   const { name, description, category, owner, tags, estimatedEffort, progress, status, statusColor, priority, priorityColor, deadline,
-    recentActivity, notes, timeInvested, health } = req.body;
+    recentActivity, notes, timeInvested, health, startDate, estimatedCompletion, linkedGoals, deliverables, links, files, activities } = req.body;
 
   const project = await prisma.project.update({
     where: { id },
     data: { name, description, category, owner, tags, estimatedEffort, progress, status, statusColor, priority, priorityColor,
-      deadline, recentActivity, notes, timeInvested, health },
+      deadline, recentActivity, notes, timeInvested, health, startDate, estimatedCompletion, linkedGoals, deliverables, links, files, activities },
     include: { tasks: true, milestones: true },
   });
   res.json(mapProject(project));

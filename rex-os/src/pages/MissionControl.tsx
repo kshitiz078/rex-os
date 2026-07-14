@@ -33,6 +33,7 @@ export default function MissionControl() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<"High" | "Medium" | "Low">("Medium");
+  const [newTaskEnergy, setNewTaskEnergy] = useState<"High" | "Medium" | "Low">("Medium");
   const [newTaskMins, setNewTaskMins] = useState<number | undefined>(undefined);
   const [newTaskProject, setNewTaskProject] = useState("");
 
@@ -97,9 +98,11 @@ export default function MissionControl() {
       priority: newTaskPriority,
       estimatedMinutes: newTaskMins,
       project: newTaskProject || undefined,
+      energy: newTaskEnergy,
     });
     setNewTaskText("");
     setNewTaskPriority("Medium");
+    setNewTaskEnergy("Medium");
     setNewTaskMins(undefined);
     setNewTaskProject("");
     setShowAddTask(false);
@@ -177,7 +180,7 @@ export default function MissionControl() {
         </div>
         <div className="flex items-center gap-3">
           {/* Energy Level */}
-          <div className="flex items-center gap-1 bg-secondary/50 rounded-full border border-border p-1">
+          <div className="flex items-center gap-1 bg-secondary/50 rounded-full border border-border p-1" title="Select your current energy level. Tasks matching this level will be highlighted below.">
             {ENERGY_LEVELS.map(e => (
               <button
                 key={e.value}
@@ -271,12 +274,18 @@ export default function MissionControl() {
                       onChange={e => setNewTaskText(e.target.value)}
                       className="w-full bg-background border border-border px-2.5 py-1.5 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                     />
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <select value={newTaskPriority} onChange={e => setNewTaskPriority(e.target.value as any)}
                         className="bg-background border border-border px-2 py-1 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary">
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
+                        <option value="High">High Prio</option>
+                        <option value="Medium">Med Prio</option>
+                        <option value="Low">Low Prio</option>
+                      </select>
+                      <select value={newTaskEnergy} onChange={e => setNewTaskEnergy(e.target.value as any)}
+                        className="bg-background border border-border px-2 py-1 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="High">High Energy</option>
+                        <option value="Medium">Med Energy</option>
+                        <option value="Low">Low Energy</option>
                       </select>
                       <input type="number" min="1" placeholder="Est. mins" value={newTaskMins || ""}
                         onChange={e => setNewTaskMins(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -300,7 +309,7 @@ export default function MissionControl() {
                         onDragEnter={() => handleDragEnter(index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={e => e.preventDefault()}
-                        className={`flex items-start gap-2 p-3 border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors cursor-grab active:cursor-grabbing group/task ${task.completed ? 'opacity-60' : ''}`}
+                        className={`flex items-start gap-2 p-3 border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors cursor-grab active:cursor-grabbing group/task ${task.completed ? 'opacity-60' : ''} ${!task.completed && task.energy === energyLevel ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}
                       >
                         <GripVertical className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/task:text-muted-foreground mt-0.5 shrink-0 transition-colors" />
                         <button onClick={() => toggleSecondaryTask(task.id)} className="mt-0.5 shrink-0">
@@ -316,6 +325,11 @@ export default function MissionControl() {
                             {task.priority && (
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${priorityColors[task.priority]}`}>
                                 {task.priority}
+                              </span>
+                            )}
+                            {task.energy && (
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${task.energy === 'High' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : task.energy === 'Medium' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}`}>
+                                {task.energy} Energy
                               </span>
                             )}
                             {task.estimatedMinutes && (

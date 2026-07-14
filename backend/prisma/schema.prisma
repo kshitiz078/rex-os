@@ -70,6 +70,13 @@ model Project {
   health         String        @default("On Track")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  startDate      String        @default("")
+  estimatedCompletion String   @default("")
+  linkedGoals    String        @default("[]")
+  deliverables   String        @default("[]")
+  links          String        @default("[]")
+  files          String        @default("[]")
+  activities     String        @default("[]")
 
   tasks      ProjectTask[]
   milestones Milestone[]
