@@ -1,29 +1,29 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  UploadCloud, PlaySquare, Music, ShoppingCart, Play, X, Plus, GripVertical, Clock, Calendar
+  UploadCloud, PlaySquare, Music, ShoppingCart, Play, X, Plus, GripVertical, Clock, Calendar, Edit2
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
+import type { PublishingCard } from "../context/AppContext";
 
 const COLUMNS = [
-  { id: "idea", name: "Idea", color: "bg-gray-500/10 border-gray-500/20 text-gray-500", dotColor: "bg-gray-400" },
-  { id: "beat-finished", name: "Beat Finished", color: "bg-primary/10 border-primary/20 text-primary", dotColor: "bg-primary" },
-  { id: "mixing", name: "Mixing", color: "bg-orange-500/10 border-orange-500/20 text-orange-500", dotColor: "bg-orange-400" },
-  { id: "mastering", name: "Mastering", color: "bg-yellow-500/10 border-yellow-500/20 text-yellow-600", dotColor: "bg-yellow-400" },
-  { id: "video-editing", name: "Video Editing", color: "bg-purple-500/10 border-purple-500/20 text-purple-500", dotColor: "bg-purple-400" },
-  { id: "thumbnail", name: "Thumbnail", color: "bg-pink-500/10 border-pink-500/20 text-pink-500", dotColor: "bg-pink-400" },
+  { id: "idea", name: "Ideas", color: "bg-gray-500/10 border-gray-500/20 text-gray-500", dotColor: "bg-gray-400" },
+  { id: "drafting", name: "Drafting", color: "bg-orange-500/10 border-orange-500/20 text-orange-500", dotColor: "bg-orange-400" },
   { id: "ready", name: "Ready", color: "bg-blue-500/10 border-blue-500/20 text-blue-500", dotColor: "bg-blue-400" },
   { id: "scheduled", name: "Scheduled", color: "bg-violet-500/10 border-violet-500/20 text-violet-500", dotColor: "bg-violet-400" },
   { id: "published", name: "Published", color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-500", dotColor: "bg-emerald-400" },
+  { id: "archived", name: "Archived", color: "bg-red-500/10 border-red-500/20 text-red-500", dotColor: "bg-red-400" },
 ];
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
-  youtube: <PlaySquare className="w-4 h-4 text-red-500" />,
-  spotify: <Music className="w-4 h-4 text-green-500" />,
-  beatstars: <ShoppingCart className="w-4 h-4 text-blue-500" />,
-  airbit: <Play className="w-4 h-4 text-orange-500" />,
-  instagram: <Play className="w-4 h-4 text-pink-500" />,
-  shorts: <Play className="w-4 h-4 text-red-400" />,
+  youtube: <PlaySquare className="w-3.5 h-3.5 text-red-500" />,
+  spotify: <Music className="w-3.5 h-3.5 text-green-500" />,
+  beatstars: <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />,
+  youtubeShorts: <Play className="w-3.5 h-3.5 text-red-400" />,
+  instagram: <Play className="w-3.5 h-3.5 text-pink-500" />,
+  tiktok: <Play className="w-3.5 h-3.5 text-cyan-500" />,
+  soundcloud: <Music className="w-3.5 h-3.5 text-orange-500" />,
+  bandcamp: <Music className="w-3.5 h-3.5 text-teal-500" />,
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -33,66 +33,93 @@ const PRIORITY_COLORS: Record<string, string> = {
   Low: "bg-blue-500/10 text-blue-600 border-blue-500/20",
 };
 
+const parsePublishDate = (dateStr: string): Date => {
+  if (!dateStr || dateStr === "TBD") return new Date("9999-12-31");
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? new Date("9999-12-31") : d;
+};
+
+const formatDateForInput = (dateStr: string): string => {
+  if (!dateStr || dateStr === "TBD") return "";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+};
+
+const displayDate = (dateStr: string): string => {
+  if (!dateStr || dateStr === "TBD") return "TBD";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+};
+
 export default function Publishing() {
-  const { publishingCards, addPublishingCard, updatePublishingCardColumn, deletePublishingCard, beats } = useAppContext();
+  const { publishingCards, addPublishingCard, updatePublishingCardColumn, editPublishingCard, deletePublishingCard, beats } = useAppContext();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetColumn, setTargetColumn] = useState("idea");
   const [title, setTitle] = useState("");
-  const [platform, setPlatform] = useState("youtube");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["youtube"]);
   const [priority, setPriority] = useState("Medium");
-  const [publishDate, setPublishDate] = useState("");
+  const [publishDate, setPublishDate] = useState(""); // internally we will store "YYYY-MM-DD" or "TBD"
   const [estTime, setEstTime] = useState("");
   const [status, setStatus] = useState("");
   const [beatId, setBeatId] = useState("");
 
-  const [editingCard, setEditingCard] = useState<any>(null);
+  const [editingCard, setEditingCard] = useState<PublishingCard | null>(null);
 
   // Drag state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
+  // Sorting state
+  const [sortBy, setSortBy] = useState<"nearest" | "overdue" | "newest" | "oldest">("nearest");
+
   const handleAddCardClick = (colId: string) => {
     setTargetColumn(colId);
     setEditingCard(null);
-    setTitle(""); setPlatform("youtube"); setPriority("Medium");
-    setPublishDate(""); setEstTime(""); setStatus(""); setBeatId("");
+    setTitle(""); 
+    setSelectedPlatforms(["youtube"]); 
+    setPriority("Medium");
+    setPublishDate(""); 
+    setEstTime(""); 
+    setStatus("Concept"); 
+    setBeatId("");
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (card: any) => {
+  const handleEditClick = (card: PublishingCard) => {
     setEditingCard(card);
     setTargetColumn(card.columnId);
     setTitle(card.title);
-    setPlatform(card.platform);
+    setSelectedPlatforms(card.platform ? card.platform.split(",").map(p => p.trim()).filter(Boolean) : []);
     setPriority(card.priority);
-    setPublishDate(card.publishDate);
+    setPublishDate(formatDateForInput(card.publishDate));
     setEstTime(card.estTime);
     setStatus(card.status);
     setBeatId(card.beatId?.toString() || "");
     setIsModalOpen(true);
   };
 
-  const { editPublishingCard } = useAppContext();
-
   const handleCreateCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const finalPlatform = selectedPlatforms.join(",");
+    const finalDate = publishDate ? publishDate : "TBD";
+
     if (editingCard) {
       editPublishingCard(editingCard.id, {
-        columnId: targetColumn, title, platform, priority,
-        publishDate: publishDate || "TBD",
+        columnId: targetColumn, title, platform: finalPlatform, priority,
+        publishDate: finalDate,
         estTime: estTime || "15m",
-        status: status || "Idea",
+        status: status || "Concept",
         beatId: beatId || undefined,
       });
     } else {
       addPublishingCard({
-        columnId: targetColumn, title, platform, priority,
-        publishDate: publishDate || "TBD",
+        columnId: targetColumn, title, platform: finalPlatform, priority,
+        publishDate: finalDate,
         estTime: estTime || "15m",
-        status: status || "Idea",
+        status: status || "Concept",
         beatId: beatId || undefined,
       });
     }
@@ -109,7 +136,55 @@ export default function Publishing() {
   };
 
   const publishedCount = publishingCards.filter(c => c.columnId === "published").length;
-  const inProgressCount = publishingCards.filter(c => !["published", "idea"].includes(c.columnId)).length;
+  const inProgressCount = publishingCards.filter(c => !["published", "archived", "idea"].includes(c.columnId)).length;
+
+  const getSortedCards = (cards: PublishingCard[]) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize for overdue checking
+
+    const overdueCards = cards.filter(c => {
+      if (c.columnId === "published" || c.columnId === "archived") return false;
+      if (c.publishDate === "TBD") return false;
+      const d = parsePublishDate(c.publishDate);
+      return d < today;
+    });
+    
+    if (sortBy === "nearest") {
+      return [...cards].sort((a, b) => parsePublishDate(a.publishDate).getTime() - parsePublishDate(b.publishDate).getTime());
+    }
+    if (sortBy === "oldest") {
+      return [...cards].sort((a, b) => a.id - b.id);
+    }
+    if (sortBy === "newest") {
+      return [...cards].sort((a, b) => b.id - a.id);
+    }
+    if (sortBy === "overdue") {
+      return [...cards].sort((a, b) => {
+        const isOverdueA = overdueCards.some(x => x.id === a.id);
+        const isOverdueB = overdueCards.some(x => x.id === b.id);
+        if (isOverdueA && !isOverdueB) return -1;
+        if (!isOverdueA && isOverdueB) return 1;
+        // If both are overdue or both are not, sort by nearest deadline
+        return parsePublishDate(a.publishDate).getTime() - parsePublishDate(b.publishDate).getTime();
+      });
+    }
+    return cards;
+  };
+
+  const renderPlatformIcons = (platformStr: string) => {
+    if (!platformStr) return <span className="text-[10px] text-muted-foreground italic">No platform</span>;
+    const platforms = platformStr.split(",").map(p => p.trim()).filter(Boolean);
+    return (
+      <div className="flex items-center gap-1.5 flex-wrap mt-1">
+        {platforms.map(p => (
+          <div key={p} className="flex items-center gap-0.5" title={p}>
+            {PLATFORM_ICONS[p] || <Play className="w-3.5 h-3.5 text-muted-foreground" />}
+            <span className="text-[9px] font-bold capitalize text-muted-foreground">{p === "youtubeShorts" ? "Shorts" : p}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-700 relative">
@@ -122,19 +197,34 @@ export default function Publishing() {
             {publishedCount} published · {inProgressCount} in pipeline · {publishingCards.length} total
           </p>
         </div>
-        <button
-          onClick={() => handleAddCardClick("idea")}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> New Content
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground">Sort By:</span>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as any)}
+              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="nearest">Nearest Deadline</option>
+              <option value="overdue">Overdue First</option>
+              <option value="newest">Newest Created</option>
+              <option value="oldest">Oldest Created</option>
+            </select>
+          </div>
+          <button
+            onClick={() => handleAddCardClick("idea")}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> New Content
+          </button>
+        </div>
       </div>
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max h-full">
           {COLUMNS.map(column => {
-            const columnCards = publishingCards.filter(card => card.columnId === column.id);
+            const columnCards = getSortedCards(publishingCards.filter(card => card.columnId === column.id));
             const isOver = dragOverCol === column.id;
             return (
               <div
@@ -160,7 +250,9 @@ export default function Publishing() {
                 {/* Cards */}
                 <div className="flex flex-col gap-3 p-3 overflow-y-auto max-h-[calc(100vh-280px)] flex-1">
                   {columnCards.map(card => {
-                    const isOverdue = card.columnId !== 'published' && card.publishDate !== 'TBD' && new Date(card.publishDate) < new Date();
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const isOverdue = card.columnId !== 'published' && card.columnId !== 'archived' && card.publishDate !== 'TBD' && parsePublishDate(card.publishDate) < today;
                     return (
                     <div
                       key={card.id}
@@ -168,21 +260,23 @@ export default function Publishing() {
                       onDragStart={() => setDraggedId(card.id)}
                       onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}
                       onDoubleClick={() => handleEditClick(card)}
-                      className={`group border ${isOverdue ? 'border-red-500/50 shadow-red-500/10' : 'border-border/50'} bg-card/80 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-grab active:cursor-grabbing active:opacity-70 active:scale-95 ${draggedId === card.id ? 'opacity-40' : ''}`}
+                      className={`group border ${isOverdue ? 'border-red-500/50 shadow-red-500/10 bg-red-500/5' : 'border-border/50 bg-card/80'} backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-grab active:cursor-grabbing active:opacity-70 active:scale-95 ${draggedId === card.id ? 'opacity-40' : ''}`}
                     >
                       <div className="p-3">
                         <div className="flex items-start gap-2 mb-2.5">
                           <GripVertical className="w-3 h-3 text-muted-foreground/30 mt-0.5 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-xs leading-tight mb-1 group-hover:text-primary transition-colors">{card.title}</h4>
-                            <div className="flex items-center gap-1.5">
-                              {PLATFORM_ICONS[card.platform] || <Play className="w-3.5 h-3.5 text-muted-foreground" />}
-                              <span className="text-[10px] font-bold capitalize text-muted-foreground">{card.platform}</span>
-                            </div>
+                            {renderPlatformIcons(card.platform)}
                           </div>
-                          <button onClick={() => deletePublishingCard(card.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all text-muted-foreground shrink-0">
-                            <X className="w-3 h-3" />
-                          </button>
+                          <div className="flex flex-col gap-1 items-end shrink-0">
+                             <button onClick={() => deletePublishingCard(card.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all text-muted-foreground">
+                                <X className="w-3 h-3" />
+                             </button>
+                             <button onClick={() => handleEditClick(card)} className="p-1 opacity-0 group-hover:opacity-100 hover:text-primary transition-all text-muted-foreground">
+                                <Edit2 className="w-3 h-3" />
+                             </button>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-wrap mb-2">
@@ -194,8 +288,12 @@ export default function Publishing() {
                           </span>
                         </div>
 
-                        <div className={`flex justify-between text-[10px] font-medium pt-2 border-t ${isOverdue ? 'border-red-500/20 text-red-500' : 'border-border/20 text-muted-foreground'}`}>
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{card.publishDate} {isOverdue && <span className="font-bold">(Overdue)</span>}</span>
+                        <div className={`flex justify-between text-[10px] font-medium pt-2 border-t ${isOverdue ? 'border-red-500/30 text-red-600 dark:text-red-400' : 'border-border/20 text-muted-foreground'}`}>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {displayDate(card.publishDate)} 
+                            {isOverdue && <span className="font-bold ml-1">(Overdue)</span>}
+                          </span>
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{card.estTime}</span>
                         </div>
 
@@ -226,7 +324,7 @@ export default function Publishing() {
         </div>
       </div>
 
-      {/* New Content Modal */}
+      {/* New / Edit Content Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="max-w-md w-full border-border/50 bg-card rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -243,25 +341,43 @@ export default function Publishing() {
                   <input type="text" required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Master EQ in 10 minutes"
                     className="w-full px-3.5 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Platform</label>
-                    <select value={platform} onChange={e => setPlatform(e.target.value)}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                      <option value="youtube">YouTube</option>
-                      <option value="spotify">Spotify</option>
-                      <option value="beatstars">BeatStars</option>
-                      <option value="airbit">Airbit</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="shorts">Shorts</option>
-                    </select>
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Platforms</label>
+                  <div className="grid grid-cols-2 gap-2 bg-secondary/30 rounded-xl p-3 border border-border/50">
+                    {Object.keys(PLATFORM_ICONS).map(p => {
+                      const isChecked = selectedPlatforms.includes(p);
+                      return (
+                        <label key={p} className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              setSelectedPlatforms(prev =>
+                                prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
+                              );
+                            }}
+                            className="rounded text-primary border-border focus:ring-primary"
+                          />
+                          {p === "youtubeShorts" ? "YouTube Shorts" : p.charAt(0).toUpperCase() + p.slice(1)}
+                        </label>
+                      );
+                    })}
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start In Column</label>
                     <select value={targetColumn} onChange={e => setTargetColumn(e.target.value)}
                       className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
                       {COLUMNS.map(col => <option key={col.id} value={col.id}>{col.name}</option>)}
                     </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</label>
+                    <input type="text" value={status} onChange={e => setStatus(e.target.value)} placeholder="Concept, Editing..."
+                      className="w-full px-2 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -279,7 +395,7 @@ export default function Publishing() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Publish Date</label>
-                    <input type="text" value={publishDate} onChange={e => setPublishDate(e.target.value)} placeholder="Jul 15"
+                    <input type="date" value={publishDate} onChange={e => setPublishDate(e.target.value)}
                       className="w-full px-2 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                 </div>

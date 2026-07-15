@@ -433,11 +433,11 @@ const initialProjects: Project[] = [
 ];
 
 const initialPublishingCards: PublishingCard[] = [
-  { id: 1, columnId: "mixing", title: "How to mix 808s", platform: "youtube", priority: "High", publishDate: "TBD", estTime: "2h", status: "Editing" },
+  { id: 1, columnId: "drafting", title: "How to mix 808s", platform: "youtube,instagram", priority: "High", publishDate: "TBD", estTime: "2h", status: "Editing" },
   { id: 2, columnId: "idea", title: "Lo-Fi Sample Pack Promo", platform: "youtube", priority: "Medium", publishDate: "TBD", estTime: "1h", status: "Concept" },
-  { id: 3, columnId: "ready", title: "Midnight Drift Beat", platform: "beatstars", priority: "High", publishDate: "Jul 4, 2026", estTime: "15m", status: "Uploaded" },
-  { id: 4, columnId: "scheduled", title: "Summer Breeze EP", platform: "spotify", priority: "Highest", publishDate: "Jul 10, 2026", estTime: "0m", status: "Scheduled" },
-  { id: 5, columnId: "published", title: "Studio Tour 2026", platform: "youtube", priority: "Medium", publishDate: "Jun 25, 2026", estTime: "0m", status: "Live" },
+  { id: 3, columnId: "ready", title: "Midnight Drift Beat", platform: "beatstars,youtube", priority: "High", publishDate: "2026-07-04", estTime: "15m", status: "Uploaded" },
+  { id: 4, columnId: "scheduled", title: "Summer Breeze EP", platform: "spotify", priority: "Highest", publishDate: "2026-07-10", estTime: "0m", status: "Scheduled" },
+  { id: 5, columnId: "published", title: "Studio Tour 2026", platform: "youtube", priority: "Medium", publishDate: "2026-06-25", estTime: "0m", status: "Live" },
 ];
 
 const initialAnnualGoals: AnnualGoal[] = [
@@ -606,13 +606,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   });
 
+  const mapOldColumnId = (colId: string): string => {
+    const c = (colId || "idea").toLowerCase();
+    if (["mixing", "mastering", "video-editing", "thumbnail", "drafting"].includes(c)) return "drafting";
+    if (["beat-finished", "idea", "ideas"].includes(c)) return "idea";
+    if (c === "ready") return "ready";
+    if (c === "scheduled") return "scheduled";
+    if (c === "published") return "published";
+    if (c === "archived") return "archived";
+    return "idea"; // default fallback
+  };
+
   const [publishingCards, setPublishingCards] = useState<PublishingCard[]>(() => {
     const loaded = load<PublishingCard[]>("rex_publishing_cards", initialPublishingCards);
     return (loaded || []).map(c => ({
       ...c,
-      columnId: c.columnId || "idea",
+      columnId: mapOldColumnId(c.columnId),
       title: c.title || "Untitled Card",
-      platform: c.platform || "youtube",
+      platform: c.platform ?? "",
       priority: c.priority || "Medium",
       publishDate: c.publishDate || "TBD",
       estTime: c.estTime || "0m",
