@@ -14,13 +14,15 @@ export interface Beat {
   key: string;
   duration: string;
   videoTheme: string;
-  status: 'Published' | 'Ready' | 'In Progress' | 'Archived';
-  mixStatus: 'Done' | 'In Progress' | 'Not Started';
-  masterStatus: 'Done' | 'In Progress' | 'Not Started';
-  videoStatus: 'Done' | 'In Progress' | 'Not Started';
+  status: 'Idea' | 'In Progress' | 'Mixing' | 'Mastering' | 'Ready' | 'Released' | 'Archived';
+  productionStage: string; // Idea | Composition | Arrangement | Recording | Mixing | Mastering | Artwork | Video | Ready | Published
   timeSignature: string;
   coverArt: string;
-  platforms: { youtube: string; spotify: string; beatstars: string; airbit: string; appleMusic: string; soundcloud: string; instagram: string; tiktok: string };
+  platforms: {
+    youtube: string; spotify: string; beatstars: string; airbit: string;
+    appleMusic: string; soundcloud: string; instagram: string; tiktok: string;
+    youtubeShorts: string; bandcamp: string;
+  };
   tags: string[];
   notes: string;
   dateCreated: string;
@@ -342,30 +344,30 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const initialBeats: Beat[] = [
   {
     id: "B-042", name: "Midnight Drift", genre: "Trap", mood: "Dark", bpm: 140, key: "C Min",
-    duration: "2:45", videoTheme: "Cyberpunk City", status: "Published",
-    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done", timeSignature: "4/4", coverArt: "",
-    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+    duration: "2:45", videoTheme: "Cyberpunk City", status: "Released", productionStage: "Published",
+    timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Not Published", appleMusic: "Not Published", soundcloud: "Not Published", instagram: "Not Published", tiktok: "Not Published", youtubeShorts: "Not Published", bandcamp: "Not Published" },
     tags: ["dark", "trap", "808"], notes: "Best seller on BeatStars", dateCreated: "2026-06-28",
   },
   {
     id: "B-043", name: "Summer Breeze", genre: "R&B", mood: "Chill", bpm: 95, key: "F Maj",
-    duration: "3:10", videoTheme: "Sunset Beach", status: "Ready",
-    mixStatus: "Done", masterStatus: "In Progress", videoStatus: "Not Started", timeSignature: "4/4", coverArt: "",
-    platforms: { youtube: "Draft", spotify: "Draft", beatstars: "Published", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+    duration: "3:10", videoTheme: "Sunset Beach", status: "Ready", productionStage: "Mastering",
+    timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Not Published", spotify: "Not Published", beatstars: "Published", airbit: "Not Published", appleMusic: "Not Published", soundcloud: "Not Published", instagram: "Not Published", tiktok: "Not Published", youtubeShorts: "Not Published", bandcamp: "Not Published" },
     tags: ["chill", "rnb", "summer"], notes: "Needs thumbnail before publishing", dateCreated: "2026-07-01",
   },
   {
     id: "B-044", name: "Titanium", genre: "Drill", mood: "Aggressive", bpm: 142, key: "D Min",
-    duration: "2:15", videoTheme: "Industrial", status: "In Progress",
-    mixStatus: "In Progress", masterStatus: "Not Started", videoStatus: "Not Started", timeSignature: "4/4", coverArt: "",
-    platforms: { youtube: "Draft", spotify: "Draft", beatstars: "Draft", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+    duration: "2:15", videoTheme: "Industrial", status: "In Progress", productionStage: "Mixing",
+    timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Not Published", spotify: "Not Published", beatstars: "Not Published", airbit: "Not Published", appleMusic: "Not Published", soundcloud: "Not Published", instagram: "Not Published", tiktok: "Not Published", youtubeShorts: "Not Published", bandcamp: "Not Published" },
     tags: ["drill", "aggressive", "hard"], notes: "WIP - mixing in progress", dateCreated: "2026-07-02",
   },
   {
     id: "B-045", name: "Cloud Nine", genre: "Lo-Fi", mood: "Relaxed", bpm: 85, key: "G Maj",
-    duration: "2:55", videoTheme: "Anime Rain", status: "Published",
-    mixStatus: "Done", masterStatus: "Done", videoStatus: "Done", timeSignature: "4/4", coverArt: "",
-    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Published", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+    duration: "2:55", videoTheme: "Anime Rain", status: "Released", productionStage: "Published",
+    timeSignature: "4/4", coverArt: "",
+    platforms: { youtube: "Published", spotify: "Published", beatstars: "Published", airbit: "Published", appleMusic: "Not Published", soundcloud: "Not Published", instagram: "Not Published", tiktok: "Not Published", youtubeShorts: "Not Published", bandcamp: "Not Published" },
     tags: ["lofi", "chill", "anime"], notes: "Featured playlist on Spotify", dateCreated: "2026-06-15",
   },
 ];
@@ -545,14 +547,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loaded = load<Beat[]>("rex_beats", initialBeats);
     return (loaded || []).map(b => ({
       ...b,
-      platforms: b.platforms || { youtube: "Draft", spotify: "Draft", beatstars: "Draft", airbit: "Draft", appleMusic: "Draft", soundcloud: "Draft", instagram: "Draft", tiktok: "Draft" },
+      platforms: {
+        youtube: b.platforms?.youtube ?? "Not Published",
+        spotify: b.platforms?.spotify ?? "Not Published",
+        beatstars: b.platforms?.beatstars ?? "Not Published",
+        airbit: b.platforms?.airbit ?? "Not Published",
+        appleMusic: b.platforms?.appleMusic ?? "Not Published",
+        soundcloud: b.platforms?.soundcloud ?? "Not Published",
+        instagram: b.platforms?.instagram ?? "Not Published",
+        tiktok: b.platforms?.tiktok ?? "Not Published",
+        youtubeShorts: b.platforms?.youtubeShorts ?? "Not Published",
+        bandcamp: b.platforms?.bandcamp ?? "Not Published",
+      },
       timeSignature: b.timeSignature || "4/4",
       coverArt: b.coverArt || "",
       tags: b.tags || [],
       notes: b.notes || "",
-      mixStatus: b.mixStatus || "Not Started",
-      masterStatus: b.masterStatus || "Not Started",
-      videoStatus: b.videoStatus || "Not Started"
+      productionStage: b.productionStage || "Idea",
+      status: b.status || "In Progress",
+      videoTheme: b.videoTheme || "",
     }));
   });
 
@@ -793,13 +806,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const publishBeat = useCallback((beatId: string) => {
     const beat = beats.find(b => b.id === beatId);
     if (!beat) return;
-    const updated: Beat = { ...beat, status: 'Published', mixStatus: 'Done', masterStatus: 'Done' };
+    const updated: Beat = { ...beat, status: 'Released', productionStage: 'Published' };
     setBeats(prev => prev.map(b => b.id === beatId ? updated : b));
     api.updateBeat(beatId, updated);
-    addActivity({ type: 'beat_published', title: 'Beat Published!', description: `${beat.name} is now live on all platforms`, icon: 'zap', color: 'text-yellow-500 bg-yellow-500/10' });
+    addActivity({ type: 'beat_published', title: 'Beat Released!', description: `${beat.name} is now live on all platforms`, icon: 'zap', color: 'text-yellow-500 bg-yellow-500/10' });
     setWeeklyReview(prev => ({ ...prev, beatsFinished: prev.beatsFinished + 1, publishingStreak: prev.publishingStreak + 1 }));
     setMonthlyGoals(prev => prev.map(g => g.title.toLowerCase().includes('beat') ? { ...g, current: Math.min(g.current + 1, g.total), progress: Math.min(Math.round(((g.current + 1) / g.total) * 100), 100) } : g));
-    addNotification({ title: 'Beat Published!', description: `${beat.name} is now live!`, type: 'success' });
+    addNotification({ title: 'Beat Released!', description: `${beat.name} is now live!`, type: 'success' });
   }, [beats, addActivity, addNotification]);
 
   const deleteBeat = useCallback((beatId: string) => {

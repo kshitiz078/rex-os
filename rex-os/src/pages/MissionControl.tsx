@@ -450,13 +450,13 @@ export default function MissionControl() {
           </Card>
 
           {/* Notes */}
-          <Card className="border-yellow-500/20 bg-yellow-50 dark:bg-yellow-950/20">
+          <Card className="border-amber-200/80 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950 shadow-sm transition-all duration-300">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-yellow-700 dark:text-yellow-500 font-black uppercase tracking-wider">Quick Notes</CardTitle>
+              <CardTitle className="text-xs text-amber-800 dark:text-amber-400 font-black uppercase tracking-wider">Quick Notes</CardTitle>
             </CardHeader>
             <CardContent>
               <textarea
-                className="w-full h-32 bg-transparent border-none focus:ring-0 resize-none placeholder:text-yellow-700/50 dark:placeholder:text-yellow-500/50 text-sm font-medium text-yellow-900 dark:text-yellow-100 focus:outline-none"
+                className="w-full h-32 bg-transparent border-none focus:ring-0 resize-none placeholder:text-amber-800/60 dark:placeholder:text-amber-400/50 text-sm font-medium text-amber-950 dark:text-amber-100 focus:outline-none"
                 placeholder="Jot thoughts without breaking focus..."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}

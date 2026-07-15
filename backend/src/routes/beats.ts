@@ -3,7 +3,7 @@ import prisma from "../db";
 
 const router = Router();
 
-/** Helper: parse JSON string arrays stored in SQLite */
+/** Helper: parse JSON string arrays stored in DB */
 const parseArr = (s: string): string[] => {
   try { return JSON.parse(s); } catch { return []; }
 };
@@ -11,10 +11,11 @@ const parseArr = (s: string): string[] => {
 /** Map a DB Beat to frontend Beat shape */
 const mapBeat = (b: {
   id: string; name: string; genre: string; mood: string; bpm: number; key: string;
-  duration: string; videoTheme: string; status: string; mixStatus: string; masterStatus: string;
-  videoStatus: string; timeSignature: string; coverArt: string; 
-  platYoutube: string; platSpotify: string; platBeatstars: string; platAirbit: string; 
-  platAppleMusic: string; platSoundcloud: string; platInstagram: string; platTiktok: string; 
+  duration: string; videoTheme: string; status: string; productionStage: string;
+  timeSignature: string; coverArt: string;
+  platYoutube: string; platSpotify: string; platBeatstars: string; platAirbit: string;
+  platAppleMusic: string; platSoundcloud: string; platInstagram: string; platTiktok: string;
+  platYoutubeShorts: string; platBandcamp: string;
   tags: string; notes: string; dateCreated: string;
 }) => ({
   id: b.id,
@@ -26,9 +27,7 @@ const mapBeat = (b: {
   duration: b.duration,
   videoTheme: b.videoTheme,
   status: b.status,
-  mixStatus: b.mixStatus,
-  masterStatus: b.masterStatus,
-  videoStatus: b.videoStatus,
+  productionStage: b.productionStage,
   timeSignature: b.timeSignature,
   coverArt: b.coverArt,
   platforms: {
@@ -40,6 +39,8 @@ const mapBeat = (b: {
     soundcloud: b.platSoundcloud,
     instagram: b.platInstagram,
     tiktok: b.platTiktok,
+    youtubeShorts: b.platYoutubeShorts,
+    bandcamp: b.platBandcamp,
   },
   tags: parseArr(b.tags),
   notes: b.notes,
@@ -54,8 +55,11 @@ router.get("/", async (_req, res) => {
 
 // POST /api/beats
 router.post("/", async (req, res) => {
-  const { name, genre, mood, bpm, key, duration, videoTheme, status, mixStatus, masterStatus,
-    videoStatus, timeSignature, coverArt, platforms, tags, notes } = req.body;
+  const {
+    name, genre, mood, bpm, key, duration, videoTheme,
+    status, productionStage, timeSignature, coverArt,
+    platforms, tags, notes
+  } = req.body;
 
   const allBeats = await prisma.beat.findMany({ select: { id: true } });
   const nextNum = allBeats.length + 46;
@@ -64,21 +68,23 @@ router.post("/", async (req, res) => {
   const beat = await prisma.beat.create({
     data: {
       id,
-      name, genre, mood, bpm: Number(bpm), key, duration, videoTheme,
+      name, genre, mood, bpm: Number(bpm), key,
+      duration: duration || "2:30",
+      videoTheme: videoTheme || "",
       status: status || "In Progress",
-      mixStatus: mixStatus || "Not Started",
-      masterStatus: masterStatus || "Not Started",
-      videoStatus: videoStatus || "Not Started",
+      productionStage: productionStage || "Idea",
       timeSignature: timeSignature || "4/4",
       coverArt: coverArt || "",
-      platYoutube: platforms?.youtube ?? "Draft",
-      platSpotify: platforms?.spotify ?? "Draft",
-      platBeatstars: platforms?.beatstars ?? "Draft",
-      platAirbit: platforms?.airbit ?? "Draft",
-      platAppleMusic: platforms?.appleMusic ?? "Draft",
-      platSoundcloud: platforms?.soundcloud ?? "Draft",
-      platInstagram: platforms?.instagram ?? "Draft",
-      platTiktok: platforms?.tiktok ?? "Draft",
+      platYoutube: platforms?.youtube ?? "Not Published",
+      platSpotify: platforms?.spotify ?? "Not Published",
+      platBeatstars: platforms?.beatstars ?? "Not Published",
+      platAirbit: platforms?.airbit ?? "Not Published",
+      platAppleMusic: platforms?.appleMusic ?? "Not Published",
+      platSoundcloud: platforms?.soundcloud ?? "Not Published",
+      platInstagram: platforms?.instagram ?? "Not Published",
+      platTiktok: platforms?.tiktok ?? "Not Published",
+      platYoutubeShorts: platforms?.youtubeShorts ?? "Not Published",
+      platBandcamp: platforms?.bandcamp ?? "Not Published",
       tags: JSON.stringify(tags || []),
       notes: notes || "",
       dateCreated: new Date().toISOString().split("T")[0],
@@ -90,14 +96,19 @@ router.post("/", async (req, res) => {
 // PUT /api/beats/:id
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, genre, mood, bpm, key, duration, videoTheme, status, mixStatus, masterStatus,
-    videoStatus, timeSignature, coverArt, platforms, tags, notes } = req.body;
+  const {
+    name, genre, mood, bpm, key, duration, videoTheme,
+    status, productionStage, timeSignature, coverArt,
+    platforms, tags, notes
+  } = req.body;
 
   const beat = await prisma.beat.update({
     where: { id },
     data: {
-      name, genre, mood, bpm: Number(bpm), key, duration, videoTheme, status,
-      mixStatus, masterStatus, videoStatus, timeSignature, coverArt,
+      name, genre, mood,
+      bpm: bpm !== undefined ? Number(bpm) : undefined,
+      key, duration, videoTheme, status, productionStage,
+      timeSignature, coverArt,
       platYoutube: platforms?.youtube,
       platSpotify: platforms?.spotify,
       platBeatstars: platforms?.beatstars,
@@ -106,6 +117,8 @@ router.put("/:id", async (req, res) => {
       platSoundcloud: platforms?.soundcloud,
       platInstagram: platforms?.instagram,
       platTiktok: platforms?.tiktok,
+      platYoutubeShorts: platforms?.youtubeShorts,
+      platBandcamp: platforms?.bandcamp,
       tags: JSON.stringify(tags || []),
       notes: notes || "",
     },

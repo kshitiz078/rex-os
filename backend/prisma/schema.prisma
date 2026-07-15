@@ -15,32 +15,32 @@ datasource db {
 // BEATS
 // ============================================================
 model Beat {
-  id            String   @id
-  name          String
-  genre         String
-  mood          String
-  bpm           Int
-  key           String
-  duration      String
-  videoTheme    String
-  status        String   @default("In Progress") // Published | Ready | In Progress | Archived
-  mixStatus     String   @default("Not Started")
-  masterStatus  String   @default("Not Started")
-  videoStatus   String   @default("Not Started")
-  timeSignature String   @default("4/4")
-  coverArt      String   @default("") // Base64 image data
-  // Platform statuses stored as individual strings
-  platYoutube    String  @default("Draft")
-  platSpotify    String  @default("Draft")
-  platBeatstars  String  @default("Draft")
-  platAirbit     String  @default("Draft")
-  platAppleMusic String  @default("Draft")
-  platSoundcloud String  @default("Draft")
-  platInstagram  String  @default("Draft")
-  platTiktok     String  @default("Draft")
-  tags          String   @default("[]") // JSON array stored as string
-  notes         String   @default("")
-  dateCreated   String
+  id              String   @id
+  name            String
+  genre           String
+  mood            String
+  bpm             Int
+  key             String
+  duration        String
+  videoTheme      String   @default("")
+  status          String   @default("In Progress") // Idea | In Progress | Mixing | Mastering | Ready | Released | Archived
+  productionStage String   @default("Idea") // Idea | Composition | Arrangement | Recording | Mixing | Mastering | Artwork | Video | Ready | Published
+  timeSignature   String   @default("4/4")
+  coverArt        String   @default("") // Base64 or URL
+  // Platform statuses stored as individual strings: Not Published | Pending | Scheduled | Published
+  platYoutube       String  @default("Not Published")
+  platSpotify       String  @default("Not Published")
+  platBeatstars     String  @default("Not Published")
+  platAirbit        String  @default("Not Published")
+  platAppleMusic    String  @default("Not Published")
+  platSoundcloud    String  @default("Not Published")
+  platInstagram     String  @default("Not Published")
+  platTiktok        String  @default("Not Published")
+  platYoutubeShorts String  @default("Not Published")
+  platBandcamp      String  @default("Not Published")
+  tags              String  @default("[]") // JSON array stored as string
+  notes             String  @default("")
+  dateCreated       String
 
   publishingCards PublishingCard[]
   assets          Asset[]

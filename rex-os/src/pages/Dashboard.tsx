@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   const nextAction = secondaryTasks.find(t => !t.completed)?.text || "All caught up! 🎉";
   const completedActionsCount = actionItems.filter(a => a.completed).length;
-  const publishedBeatsCount = beats.filter(b => b.status === "Published").length;
+  const publishedBeatsCount = beats.filter(b => b.status === "Released").length;
   const scheduledUploads = publishingCards.filter(c => c.columnId === "scheduled").length;
   const readyBeats = beats.filter(b => b.status === "Ready").length;
 
