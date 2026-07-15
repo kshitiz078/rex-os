@@ -425,9 +425,14 @@ export default function MissionControl() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-bold">
                   <span className="text-muted-foreground">Publishing Streak</span>
-                  <span className="text-orange-500">🔥 {weeklyReview.publishingStreak} days</span>
+                  <span className="text-orange-500 flex items-center gap-1">
+                    🔥 {weeklyReview.publishingStreak} days {weeklyReview.publishingStreak >= (appSettings.publishingStreakGoal || 7) && "🏆"}
+                  </span>
                 </div>
-                <Progress value={Math.min((weeklyReview.publishingStreak / 30) * 100, 100)} className="h-2.5 [&>div]:bg-orange-500" />
+                <Progress 
+                  value={Math.min((weeklyReview.publishingStreak / (appSettings.publishingStreakGoal || 7)) * 100, 100)} 
+                  className={`h-2.5 ${weeklyReview.publishingStreak >= (appSettings.publishingStreakGoal || 7) ? "[&>div]:bg-gradient-to-r [&>div]:from-orange-500 [&>div]:to-yellow-500" : "[&>div]:bg-orange-500"}`} 
+                />
               </div>
             </CardContent>
           </Card>

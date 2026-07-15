@@ -216,7 +216,7 @@ export interface CalendarEvent {
 }
 
 export interface AppSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: string;
   defaultFocusMinutes: number;
   defaultBreakMinutes: number;
   defaultUploadPlatforms: string[];
@@ -712,18 +712,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { localStorage.setItem("rex_calendar_events", JSON.stringify(calendarEvents)); }, [calendarEvents]);
   useEffect(() => { localStorage.setItem("rex_app_settings", JSON.stringify(appSettings)); }, [appSettings]);
 
-  // Dark mode sync — apply Tailwind `.dark` class to <html> based on appSettings.theme
+  // Theme sync — apply CSS theme classes to <html> based on appSettings.theme
   useEffect(() => {
     const root = document.documentElement;
+    root.classList.remove('dark', 'light', 'theme-desert', 'theme-forest');
     if (appSettings.theme === 'dark') {
       root.classList.add('dark');
-    } else if (appSettings.theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      // system
+    } else if (appSettings.theme === 'desert') {
+      root.classList.add('theme-desert');
+    } else if (appSettings.theme === 'forest') {
+      root.classList.add('theme-forest');
+    } else if (appSettings.theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) root.classList.add('dark');
-      else root.classList.remove('dark');
     }
   }, [appSettings.theme]);
 

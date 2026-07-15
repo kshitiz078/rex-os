@@ -46,18 +46,30 @@ export default function Assets() {
   const [name, setName] = useState("");
   const [type, setType] = useState<Asset["type"]>("Cover Art");
   const [driveLink, setDriveLink] = useState("");
+  const [customPreviewUrl, setCustomPreviewUrl] = useState("");
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
-  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
   const resetForm = () => {
-    setName(""); setType("Cover Art"); setDriveLink(""); setTags(""); setNotes("");
+    setName(""); setType("Cover Art"); setDriveLink(""); setCustomPreviewUrl(""); setTags(""); setNotes("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    addAsset({ name, type, driveLink, previewUrl: getDriveEmbedUrl(driveLink) || "", tags: tags.split(",").map(t => t.trim()).filter(Boolean), notes });
+    
+    // Automatically extract preview URL from Google Drive link if not explicitly provided
+    const finalPreviewUrl = customPreviewUrl.trim() || getDriveEmbedUrl(driveLink) || "";
+
+    addAsset({ 
+      name, 
+      type, 
+      driveLink, 
+      previewUrl: finalPreviewUrl, 
+      tags: tags.split(",").map(t => t.trim()).filter(Boolean), 
+      notes 
+    });
+    
     resetForm();
     setIsModalOpen(false);
   };
@@ -75,6 +87,8 @@ export default function Assets() {
     return acc;
   }, {} as Record<Asset["type"], number>);
 
+  const computedEmbedUrl = customPreviewUrl.trim() || getDriveEmbedUrl(driveLink);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
       {/* Header */}
@@ -84,7 +98,7 @@ export default function Assets() {
             <HardDrive className="w-8 h-8 text-primary" /> Assets
           </h1>
           <p className="text-muted-foreground mt-1 text-lg font-medium">
-            {assets.length} files · Manage your creative library
+            {assets.length} files · Google Drive Integration
           </p>
         </div>
         <button
@@ -133,9 +147,13 @@ export default function Assets() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(asset => {
             const Icon = TYPE_ICONS[asset.type];
-            const embedUrl = asset.previewUrl || getDriveEmbedUrl(asset.driveLink || "");
             return (
-              <Card key={asset.id} className="border-border/50 bg-card/50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group">
+              <Card 
+                key={asset.id} 
+                className="border-border/50 bg-card/50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer"
+                onClick={() => asset.driveLink && window.open(asset.driveLink, '_blank')}
+                title="Click to open in Google Drive"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${TYPE_COLORS[asset.type]}`}>
@@ -147,32 +165,26 @@ export default function Assets() {
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all ml-1 shrink-0">
                           {asset.driveLink && (
                             <a href={asset.driveLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                              className="p-1 hover:text-primary text-muted-foreground transition-all">
+                              className="p-1 hover:text-primary text-muted-foreground transition-all" title="Open Link">
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           )}
-                          <button onClick={() => deleteAsset(asset.id)} className="p-1 hover:text-red-500 text-muted-foreground transition-all">
+                          <button onClick={(e) => { e.stopPropagation(); deleteAsset(asset.id); }} className="p-1 hover:text-red-500 text-muted-foreground transition-all" title="Delete Asset">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${TYPE_COLORS[asset.type]}`}>{asset.type}</span>
-                        {asset.driveLink && <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded font-bold">Drive</span>}
+                        {asset.driveLink && <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded font-bold">Drive Link</span>}
                       </div>
                     </div>
                   </div>
 
-                  {embedUrl && (
-                    <div className="mt-3 rounded-lg overflow-hidden border border-border/30 h-40 cursor-pointer"
-                      onClick={() => setPreviewAsset(previewAsset?.id === asset.id ? null : asset)}>
-                      {previewAsset?.id === asset.id ? (
-                        <iframe src={embedUrl} className="w-full h-full" allow="autoplay" />
-                      ) : (
-                        <div className="w-full h-full bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground font-medium">
-                          Click to preview
-                        </div>
-                      )}
+                  {asset.previewUrl && (
+                    <div className="mt-4 rounded-lg overflow-hidden border border-border/30 h-32 relative group-hover:border-primary/50 transition-colors bg-secondary/20 flex items-center justify-center">
+                      <iframe src={asset.previewUrl} className="w-full h-full pointer-events-none" allow="autoplay" />
+                      <div className="absolute inset-0 bg-transparent" /> {/* Overlay to capture clicks */}
                     </div>
                   )}
 
@@ -184,8 +196,7 @@ export default function Assets() {
                     </div>
                   )}
 
-                  {asset.notes && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{asset.notes}</p>}
-                  <p className="text-[10px] text-muted-foreground mt-2">Added {asset.dateAdded}</p>
+                  {asset.notes && <p className="text-xs text-muted-foreground mt-3 leading-relaxed border-l-2 border-primary/20 pl-2">{asset.notes}</p>}
                 </CardContent>
               </Card>
             );
@@ -196,28 +207,31 @@ export default function Assets() {
       {/* Add Asset Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="max-w-md w-full border-border/50 bg-card rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 hover:bg-secondary rounded-lg transition-colors">
+          <Card className="max-w-xl w-full border-border/50 bg-card rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 overflow-hidden max-h-[90vh] flex flex-col">
+            <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 hover:bg-secondary rounded-lg transition-colors z-10">
               <X className="w-5 h-5" />
             </button>
-            <CardHeader>
-              <CardTitle className="text-xl font-extrabold">Add New Asset</CardTitle>
+            <CardHeader className="shrink-0 bg-card z-10 border-b border-border/50">
+              <CardTitle className="text-xl font-extrabold flex items-center gap-2">
+                <HardDrive className="w-5 h-5 text-primary" /> Add Google Drive Asset
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <CardContent className="overflow-y-auto p-6 flex-1">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Asset Name *</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Name *</label>
                   <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Midnight Drift Cover Art"
-                    className="w-full px-3.5 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm font-medium focus:outline-none focus:border-primary transition-colors" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Type</label>
-                  <div className="grid grid-cols-4 gap-1.5">
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+                  <div className="grid grid-cols-4 gap-2">
                     {ASSET_TYPES.map(t => {
                       const Icon = TYPE_ICONS[t];
                       return (
                         <button key={t} type="button" onClick={() => setType(t)}
-                          className={`py-1.5 px-2 rounded-lg text-[11px] font-bold border transition-all flex flex-col items-center gap-1 ${type === t ? TYPE_COLORS[t] : 'border-border text-muted-foreground hover:bg-secondary/50'}`}>
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold border transition-all flex flex-col items-center gap-1.5 ${type === t ? TYPE_COLORS[t] : 'border-border text-muted-foreground hover:bg-secondary/50'}`}>
                           <Icon className="w-4 h-4" />
                           {t}
                         </button>
@@ -225,24 +239,45 @@ export default function Assets() {
                     })}
                   </div>
                 </div>
+
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Google Drive Link</label>
-                  <input type="url" value={driveLink} onChange={e => setDriveLink(e.target.value)} placeholder="https://drive.google.com/file/d/..."
-                    className="w-full px-3.5 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  <p className="text-xs text-muted-foreground">Paste a shareable Google Drive link to embed a preview.</p>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Google Drive URL *</label>
+                  <input type="url" required value={driveLink} onChange={e => setDriveLink(e.target.value)} placeholder="https://drive.google.com/file/d/..."
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm font-medium focus:outline-none focus:border-primary transition-colors" />
                 </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Preview URL (Optional)</label>
+                  <input type="url" value={customPreviewUrl} onChange={e => setCustomPreviewUrl(e.target.value)} placeholder="Auto-generated if left blank"
+                    className="w-full px-3.5 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors" />
+                </div>
+
+                {/* Live Preview Pane */}
+                {computedEmbedUrl && (
+                  <div className="bg-secondary/20 rounded-xl p-3 border border-border/50">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1">
+                      <Image className="w-3 h-3" /> Live Preview
+                    </p>
+                    <div className="w-full h-32 rounded-lg overflow-hidden bg-black/5">
+                      <iframe src={computedEmbedUrl} className="w-full h-full" allow="autoplay" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Any notes about this asset..."
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm font-medium focus:outline-none focus:border-primary transition-colors resize-none" />
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tags</label>
-                  <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="dark, cyberpunk, final..."
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="dark, cyberpunk, final... (comma separated)"
+                    className="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm font-medium focus:outline-none focus:border-primary transition-colors" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notes</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Any notes about this asset..."
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
-                </div>
-                <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold py-2.5 rounded-lg shadow-lg transition-all">
-                  Add Asset
+
+                <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                  <Plus className="w-5 h-5" /> Save Asset
                 </button>
               </form>
             </CardContent>

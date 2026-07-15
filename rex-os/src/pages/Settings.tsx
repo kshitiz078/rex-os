@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Clock, Target, Database, Download, RotateCcw, Cloud } from "lucide-react";
+import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Clock, Target, Database, Download, RotateCcw, Cloud, Sunset, TreePine } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import * as api from "../services/api";
 
@@ -31,6 +31,8 @@ export default function Settings() {
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
     { value: "system", label: "System", icon: Monitor },
+    { value: "desert", label: "Desert", icon: Sunset },
+    { value: "forest", label: "Forest", icon: TreePine },
   ] as const;
 
   const platforms = ["youtube", "spotify", "beatstars", "airbit", "instagram"];
@@ -111,7 +113,7 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div>
             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 block">Theme</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {themes.map(t => (
                 <button
                   key={t.value}
@@ -124,7 +126,7 @@ export default function Settings() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Note: Theme switching requires CSS variable support. The current beige/brown aesthetic is preserved across all modes.
+              Note: The selected theme updates the entire application color scheme instantly.
             </p>
           </div>
         </CardContent>
