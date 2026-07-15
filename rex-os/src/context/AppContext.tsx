@@ -204,12 +204,15 @@ export interface Notification {
 export interface CalendarEvent {
   id: number;
   title: string;
+  description?: string;
   date: string;
   platform: string;
   color: string;
   isRecurring: boolean;
   status: 'scheduled' | 'published' | 'overdue' | 'draft';
+  notes?: string;
   beatId?: string;
+  projectId?: number;
 }
 
 export interface AppSettings {
@@ -506,10 +509,10 @@ const initialNotifications: Notification[] = [
 ];
 
 const initialCalendarEvents: CalendarEvent[] = [
-  { id: 1, title: "Midnight Drift (YouTube)", date: "2026-07-04", platform: "youtube", color: "#ef4444", isRecurring: false, status: "published", beatId: "B-042" },
-  { id: 2, title: "Summer Breeze EP (Spotify)", date: "2026-07-10", platform: "spotify", color: "#22c55e", isRecurring: false, status: "scheduled", beatId: "B-043" },
-  { id: 3, title: "Weekly Tutorial Video", date: "2026-07-07", platform: "youtube", color: "#ef4444", isRecurring: true, status: "scheduled" },
-  { id: 4, title: "BeatStars Upload", date: "2026-07-14", platform: "beatstars", color: "#3b82f6", isRecurring: false, status: "draft" },
+  { id: 1, title: "Midnight Drift (YouTube)", description: "Full beat video with visualiser", date: "2026-07-04", platform: "youtube,instagram", color: "#ef4444", isRecurring: false, status: "published", beatId: "B-042", notes: "Add BeatStars link in description" },
+  { id: 2, title: "Summer Breeze EP (Spotify)", description: "Submit to DistroKid for distribution", date: "2026-07-10", platform: "spotify,appleMusic", color: "#22c55e", isRecurring: false, status: "scheduled", beatId: "B-043" },
+  { id: 3, title: "Weekly Tutorial Video", description: "How to make a lo-fi beat in 30 mins", date: "2026-07-07", platform: "youtube,youtubeShorts", color: "#ef4444", isRecurring: true, status: "scheduled", notes: "Record thumbnail on same day" },
+  { id: 4, title: "BeatStars Upload", description: "Upload 5 new beats to BeatStars store", date: "2026-07-14", platform: "beatstars", color: "#3b82f6", isRecurring: false, status: "draft" },
 ];
 
 const initialSettings: AppSettings = {
@@ -671,11 +674,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return (loaded || []).map(e => ({
       ...e,
       title: e.title || "Untitled Event",
+      description: e.description ?? "",
       date: e.date || new Date().toISOString().split("T")[0],
-      platform: e.platform || "youtube",
+      platform: e.platform ?? "",
       color: e.color || "#ef4444",
       isRecurring: !!e.isRecurring,
-      status: e.status || "scheduled"
+      status: e.status || "scheduled",
+      notes: e.notes ?? "",
+      projectId: e.projectId ?? undefined,
     }));
   });
   const [appSettings, setAppSettings] = useState<AppSettings>(() => {

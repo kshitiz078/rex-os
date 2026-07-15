@@ -288,12 +288,15 @@ model Notification {
 model CalendarEvent {
   id            Int     @id @default(autoincrement())
   title         String
+  description   String  @default("")
   date          String
-  platform      String
+  platform      String  @default("")
   color         String  @default("#ef4444")
   isRecurring   Boolean @default(false)
   status        String  @default("scheduled")
+  notes         String  @default("")
   beatId        String?
+  projectId     Int?
   beat          Beat?   @relation(fields: [beatId], references: [id], onDelete: SetNull)
   googleEventId String?
 }
