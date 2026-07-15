@@ -13,7 +13,7 @@ router.get("/", async (_req, res) => {
 // PUT /api/weekly-review  — partial update (upsert)
 router.put("/", async (req, res) => {
   const existing = await prisma.weeklyReview.findFirst();
-  const data = req.body;
+  const { id, ...data } = req.body;
 
   const updated = existing
     ? await prisma.weeklyReview.update({ where: { id: existing.id }, data })
