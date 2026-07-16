@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx prisma generate --schema=backend/prisma/schema.prisma && cd rex-os && npm run build",
+  "buildCommand": "npx prisma@5.22.0 generate --schema=backend/prisma/schema.prisma && cd rex-os && npm run build",
   "outputDirectory": "rex-os/dist",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
