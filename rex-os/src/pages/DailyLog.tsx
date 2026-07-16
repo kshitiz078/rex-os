@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, Plus, X, CheckCircle2, Clock, ArrowRight, Trash2, Edit3 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { DailyLog } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
 
-const CATEGORIES = ["Music Production", "Content Creation", "Business", "Marketing", "Admin", "Learning", "Other"];
+const CATEGORIES = ["Music Production", "Content Publishing", "Business", "Marketing", "Admin", "Learning", "Other"];
 const STATUSES = ["Completed", "In Progress", "Blocked"] as const;
 
 export default function DailyLog() {
@@ -77,21 +78,19 @@ export default function DailyLog() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <ClipboardList className="w-8 h-8 text-primary" /> Daily Log
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">Track your work output and build momentum.</p>
-        </div>
-        <button
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Log Work
-        </button>
-      </div>
+      <PageHeader
+        icon={ClipboardList}
+        title="Daily Log"
+        subtitle="Track your work output and build momentum."
+        actions={
+          <button
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" /> Log Work
+          </button>
+        }
+      />
 
       {/* Today's Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
