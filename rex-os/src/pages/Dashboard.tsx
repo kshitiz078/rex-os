@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Clock, CheckCircle2, Target, Zap, Play, Flame, TrendingUp, FolderKanban,
-  Calendar, Music2, UploadCloud, Pause, RotateCcw, ArrowRight, BookOpen, ClipboardList
+  Calendar, Music2, UploadCloud, Pause, RotateCcw, ArrowRight, BookOpen, ClipboardList, Activity
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -72,16 +73,14 @@ export default function Dashboard() {
   const today = new Date().toISOString().split("T")[0];
   const todayEvents = calendarEvents.filter(e => e.date === today);
 
-
-
   // Quick actions
   const quickActions = [
-    { label: "New Beat", icon: Music2, color: "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground", action: () => navigate("/beat-library") },
-    { label: "New Project", icon: FolderKanban, color: "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white", action: () => navigate("/projects") },
-    { label: "Log Work", icon: ClipboardList, color: "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white", action: () => navigate("/daily-log") },
-    { label: "Schedule Upload", icon: UploadCloud, color: "bg-purple-500/10 text-purple-500 hover:bg-purple-500 hover:text-white", action: () => navigate("/publishing") },
-    { label: "Add Note", icon: BookOpen, color: "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500 hover:text-white", action: () => navigate("/knowledge-vault") },
-    { label: "Calendar", icon: Calendar, color: "bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white", action: () => navigate("/calendar") },
+    { label: "New Beat", icon: Music2, color: "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10", action: () => navigate("/beat-library") },
+    { label: "New Project", icon: FolderKanban, color: "bg-blue-500/5 border-blue-500/20 text-blue-600 hover:bg-blue-500/10", action: () => navigate("/projects") },
+    { label: "Log Work", icon: ClipboardList, color: "bg-emerald-500/5 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/10", action: () => navigate("/daily-log") },
+    { label: "Schedule Upload", icon: UploadCloud, color: "bg-purple-500/5 border-purple-500/20 text-purple-600 hover:bg-purple-500/10", action: () => navigate("/publishing") },
+    { label: "Add Note", icon: BookOpen, color: "bg-yellow-500/5 border-yellow-500/20 text-yellow-600 hover:bg-yellow-500/10", action: () => navigate("/knowledge-vault") },
+    { label: "Calendar", icon: Calendar, color: "bg-orange-500/5 border-orange-500/20 text-orange-600 hover:bg-orange-500/10", action: () => navigate("/calendar") },
   ];
 
   const activityIconMap: Record<string, string> = {
@@ -91,29 +90,25 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            {getGreeting()}, Rex.
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">
-            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · Here's your CEO brief.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-950/30 dark:to-orange-900/10 px-4 py-2 rounded-full border border-orange-200 dark:border-orange-900 shadow-sm">
-            <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
-            <span className="font-black text-orange-700 dark:text-orange-400 text-sm">{publishingStreak} Day Streak</span>
-          </div>
-          {readyBeats > 0 && (
-            <div className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20">
-              <Music2 className="w-4 h-4 text-blue-500" />
-              <span className="font-black text-blue-600 dark:text-blue-400 text-sm">{readyBeats} Beats Ready</span>
+      <PageHeader
+        icon={Activity}
+        title={`${getGreeting()}, Rex.`}
+        subtitle={`${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · Here's your CEO brief.`}
+        actions={
+          <>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-950/30 dark:to-orange-900/10 px-4 py-2 rounded-full border border-orange-200 dark:border-orange-900 shadow-sm">
+              <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
+              <span className="font-black text-orange-700 dark:text-orange-400 text-sm">{publishingStreak} Day Streak</span>
             </div>
-          )}
-        </div>
-      </div>
+            {readyBeats > 0 && (
+              <div className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20">
+                <Music2 className="w-4 h-4 text-blue-500" />
+                <span className="font-black text-blue-600 dark:text-blue-400 text-sm">{readyBeats} Beats Ready</span>
+              </div>
+            )}
+          </>
+        }
+      />
 
       {/* Quick Actions */}
       <div>
@@ -123,9 +118,9 @@ export default function Dashboard() {
             <button
               key={i}
               onClick={qa.action}
-              className={`flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 transition-all duration-200 hover:-translate-y-1 hover:shadow-md text-center ${qa.color}`}
+              className={`flex flex-col items-center gap-3 p-5 rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-95 ${qa.color}`}
             >
-              <qa.icon className="w-5 h-5" />
+              <qa.icon className="w-6 h-6" />
               <span className="text-[10px] font-black uppercase tracking-wide leading-none">{qa.label}</span>
             </button>
           ))}
@@ -229,7 +224,7 @@ export default function Dashboard() {
           </div>
 
           {/* Active Projects */}
-          <Card className="border-border/50 bg-card/50">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-md hover:shadow-lg transition-all duration-300 animate-in">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center justify-between">
                 <span className="flex items-center gap-2"><FolderKanban className="w-4 h-4 text-primary" /> Active Projects</span>

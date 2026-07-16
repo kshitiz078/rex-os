@@ -63,13 +63,13 @@ function NavGroup({ title, items, location }: { title: string; items: typeof mai
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                    : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+                    ? "bg-primary/10 text-primary font-semibold shadow-sm border-l-2 border-primary pl-[10px]"
+                    : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground border-l-2 border-transparent pl-[10px]"
                 )}
               >
                 <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "")} />
                 {item.name}
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                {isActive && <div className="ml-auto w-2 h-2 rounded-full bg-primary" />}
               </Link>
             );
           })}

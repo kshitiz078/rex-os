@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Clock, Target, Database, Download, RotateCcw, Cloud, Sunset, TreePine } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import * as api from "../services/api";
+import PageHeader from "../components/shared/PageHeader";
 
 export default function Settings() {
   const { appSettings, updateSettings, resetPortal } = useAppContext();
@@ -98,12 +99,11 @@ export default function Settings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10 max-w-3xl">
-      <div>
-        <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-          <SettingsIcon className="w-8 h-8 text-primary" /> Settings
-        </h1>
-        <p className="text-muted-foreground mt-1 text-lg font-medium">Configure your REX OS experience.</p>
-      </div>
+      <PageHeader
+        icon={SettingsIcon}
+        title="Settings"
+        subtitle="Configure your REX OS experience."
+      />
 
       {/* Appearance */}
       <Card className="border-border/50">

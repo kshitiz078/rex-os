@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Search, Music2, Image as ImageIcon, X, Plus, Copy, Trash2,
@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { Beat } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
+import EmptyState from "../components/shared/EmptyState";
 
 type SortKey = 'name' | 'bpm' | 'dateCreated' | 'status' | 'genre';
 
@@ -252,23 +254,19 @@ export default function BeatLibrary() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700 pb-10 relative">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <Music2 className="w-8 h-8 text-primary" /> Beat Library
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm font-medium">
-            {beats.length} total · {releasedCount} released · {readyCount} ready
-          </p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> New Beat
-        </button>
-      </div>
+      <PageHeader
+        icon={Music2}
+        title="Beat Library"
+        subtitle={`${beats.length} total · ${releasedCount} released · ${readyCount} ready`}
+        actions={
+          <button
+            onClick={openCreate}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" /> New Beat
+          </button>
+        }
+      />
 
       {/* Bulk Actions */}
       {selectedBeatIds.size > 0 && (
@@ -306,7 +304,7 @@ export default function BeatLibrary() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] uppercase bg-secondary/30 text-muted-foreground font-black tracking-widest">
+            <thead className="text-[10px] uppercase bg-secondary/30 text-muted-foreground font-black tracking-widest sticky top-0 z-10 backdrop-blur-sm">
               <tr>
                 <th className="px-4 py-3 w-10">
                   <input type="checkbox" className="rounded"
@@ -333,9 +331,20 @@ export default function BeatLibrary() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
+              {sorted.length === 0 && (
+                <tr>
+                  <td colSpan={8}>
+                    <EmptyState
+                      icon={Search}
+                      title="No beats found"
+                      description="Try adjusting your search or filters."
+                    />
+                  </td>
+                </tr>
+              )}
               {sorted.map(beat => (
-                <>
-                  <tr key={beat.id} className="hover:bg-secondary/20 transition-colors group">
+                <React.Fragment key={beat.id}>
+                  <tr className="hover:bg-secondary/20 even:bg-secondary/5 transition-colors group">
                     <td className="px-4 py-3">
                       <input type="checkbox" className="rounded" checked={selectedBeatIds.has(beat.id)}
                         onChange={() => toggleSelect(beat.id)} onClick={e => e.stopPropagation()} />
@@ -484,7 +493,7 @@ export default function BeatLibrary() {
                       </td>
                     </tr>
                   )}
-                </>
+                  </React.Fragment>
               ))}
             </tbody>
           </table>

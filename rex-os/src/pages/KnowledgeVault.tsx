@@ -4,6 +4,7 @@ import { BookOpen, Plus, X, Star, Search, ExternalLink, Trash2, Edit3, FileText 
 import { useAppContext } from "../context/AppContext";
 import type { KnowledgeEntry } from "../context/AppContext";
 import * as api from "../services/api";
+import PageHeader from "../components/shared/PageHeader";
 
 const CATEGORIES: KnowledgeEntry["category"][] = ["Idea", "Inspiration", "Lyrics", "Business", "Marketing", "Link", "Reference"];
 
@@ -77,23 +78,19 @@ export default function KnowledgeVault() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-primary" /> Knowledge Vault
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">
-            {knowledgeEntries.length} entries · {knowledgeEntries.filter(e => e.isFavorite).length} favorited
-          </p>
-        </div>
-        <button
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> New Entry
-        </button>
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title="Knowledge Vault"
+        subtitle={`${knowledgeEntries.length} entries · ${knowledgeEntries.filter(e => e.isFavorite).length} favorited`}
+        actions={
+          <button
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" /> New Entry
+          </button>
+        }
+      />
 
       {/* Stats by category */}
       <div className="grid grid-cols-3 md:grid-cols-7 gap-2">

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { PublishingCard } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
 
 const COLUMNS = [
   { id: "idea", name: "Ideas", color: "bg-gray-500/10 border-gray-500/20 text-gray-500", dotColor: "bg-gray-400" },
@@ -59,18 +60,16 @@ export default function Publishing() {
   const [title, setTitle] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["youtube"]);
   const [priority, setPriority] = useState("Medium");
-  const [publishDate, setPublishDate] = useState(""); // internally we will store "YYYY-MM-DD" or "TBD"
+  const [publishDate, setPublishDate] = useState(""); 
   const [estTime, setEstTime] = useState("");
   const [status, setStatus] = useState("");
   const [beatId, setBeatId] = useState("");
 
   const [editingCard, setEditingCard] = useState<PublishingCard | null>(null);
 
-  // Drag state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
-  // Sorting state
   const [sortBy, setSortBy] = useState<"nearest" | "overdue" | "newest" | "oldest">("nearest");
 
   const handleAddCardClick = (colId: string) => {
@@ -140,7 +139,7 @@ export default function Publishing() {
 
   const getSortedCards = (cards: PublishingCard[]) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // normalize for overdue checking
+    today.setHours(0, 0, 0, 0); 
 
     const overdueCards = cards.filter(c => {
       if (c.columnId === "published" || c.columnId === "archived") return false;
@@ -164,7 +163,6 @@ export default function Publishing() {
         const isOverdueB = overdueCards.some(x => x.id === b.id);
         if (isOverdueA && !isOverdueB) return -1;
         if (!isOverdueA && isOverdueB) return 1;
-        // If both are overdue or both are not, sort by nearest deadline
         return parsePublishDate(a.publishDate).getTime() - parsePublishDate(b.publishDate).getTime();
       });
     }
@@ -188,39 +186,35 @@ export default function Publishing() {
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-700 relative">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <UploadCloud className="w-8 h-8 text-primary" /> Publishing
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">
-            {publishedCount} published · {inProgressCount} in pipeline · {publishingCards.length} total
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground">Sort By:</span>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-              className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+      <PageHeader
+        icon={UploadCloud}
+        title="Publishing"
+        subtitle={`${publishedCount} published · ${inProgressCount} in pipeline · ${publishingCards.length} total`}
+        actions={
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-muted-foreground">Sort By:</span>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as any)}
+                className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="nearest">Nearest Deadline</option>
+                <option value="overdue">Overdue First</option>
+                <option value="newest">Newest Created</option>
+                <option value="oldest">Oldest Created</option>
+              </select>
+            </div>
+            <button
+              onClick={() => handleAddCardClick("idea")}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
             >
-              <option value="nearest">Nearest Deadline</option>
-              <option value="overdue">Overdue First</option>
-              <option value="newest">Newest Created</option>
-              <option value="oldest">Oldest Created</option>
-            </select>
-          </div>
-          <button
-            onClick={() => handleAddCardClick("idea")}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> New Content
-          </button>
-        </div>
-      </div>
+              <Plus className="w-4 h-4" /> New Content
+            </button>
+          </>
+        }
+      />
 
-      {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max h-full">
           {COLUMNS.map(column => {
@@ -234,7 +228,6 @@ export default function Publishing() {
                 onDragLeave={() => setDragOverCol(null)}
                 onDrop={() => handleDrop(column.id)}
               >
-                {/* Column Header */}
                 <div className="flex items-center justify-between p-3 px-4 border-b border-border/30">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${column.dotColor}`} />
@@ -247,9 +240,13 @@ export default function Publishing() {
                   </span>
                 </div>
 
-                {/* Cards */}
-                <div className="flex flex-col gap-3 p-3 overflow-y-auto max-h-[calc(100vh-280px)] flex-1">
-                  {columnCards.map(card => {
+                <div className="p-3 space-y-3 flex-1 overflow-y-auto">
+                  {columnCards.length === 0 ? (
+                    <div className="py-6 text-center text-muted-foreground/50 border-2 border-dashed border-border/50 rounded-xl">
+                      <span className="text-xs font-bold">Drop here</span>
+                    </div>
+                  ) : 
+                    columnCards.map(card => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const isOverdue = card.columnId !== 'published' && card.columnId !== 'archived' && card.publishDate !== 'TBD' && parsePublishDate(card.publishDate) < today;

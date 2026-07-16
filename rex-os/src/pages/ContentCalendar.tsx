@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { CalendarEvent } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type ViewMode = "month" | "week" | "day" | "agenda" | "list";
@@ -470,47 +471,45 @@ export default function ContentCalendar() {
   // ════════════════════════════════════════════════════════════════════════
   return (
     <div className="space-y-6 animate-in fade-in duration-700 pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <CalendarIcon className="w-8 h-8 text-primary" /> Content Calendar
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">Schedule and track your content drops.</p>
-        </div>
+      <PageHeader
+        icon={CalendarIcon}
+        title="Content Calendar"
+        subtitle="Schedule and track your content drops."
+        actions={
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* View switcher */}
+            <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border">
+              {(["month","week","day","agenda","list"] as ViewMode[]).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg capitalize transition-colors ${view === v ? "bg-background shadow-sm text-foreground" : "hover:bg-secondary text-muted-foreground"}`}
+                >{v}</button>
+              ))}
+            </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* View switcher */}
-          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border">
-            {(["month","week","day","agenda","list"] as ViewMode[]).map(v => (
+            {/* Navigation */}
+            <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border">
+              <button onClick={goPrev} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
               <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-3 py-1 text-xs font-bold rounded-lg capitalize transition-colors ${view === v ? "bg-background shadow-sm text-foreground" : "hover:bg-secondary text-muted-foreground"}`}
-              >{v}</button>
-            ))}
-          </div>
+                onClick={goToday}
+                className="px-4 py-1.5 font-bold text-xs hover:bg-secondary rounded-lg transition-colors text-primary"
+              >
+                Today
+              </button>
+              <button onClick={goNext} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+            </div>
 
-          {/* Navigation */}
-          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border">
-            <button onClick={goPrev} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
             <button
-              onClick={goToday}
-              className="px-4 py-1.5 font-bold text-xs hover:bg-secondary rounded-lg transition-colors text-primary"
+              onClick={() => openCreate(todayStr())}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full text-sm font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
             >
-              Today
+              <Plus className="w-4 h-4" /> Add Event
             </button>
-            <button onClick={goNext} className="p-2 hover:bg-secondary rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
           </div>
+        }
+      />
 
-          <button
-            onClick={() => openCreate(todayStr())}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2 rounded-full text-sm font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Add Event
-          </button>
-        </div>
-      </div>
 
       {/* Label */}
       <div className="text-center text-xl font-black text-muted-foreground tracking-tight">{navLabel()}</div>

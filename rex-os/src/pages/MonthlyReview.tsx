@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Target, Calendar, Zap, Flag, Plus, X, Trash2, CheckCircle } from "lucide-react";
+import { Target, Plus, X, Trash2, Calendar, Zap, Flag, CheckCircle } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
+import EmptyState from "../components/shared/EmptyState";
 
 export default function MonthlyReview() {
   const { monthlyGoals, addGoal, updateGoalProgress, updateGoal, deleteGoal } = useAppContext();
@@ -111,9 +113,11 @@ export default function MonthlyReview() {
         {icon} {sectionTitle}
       </h2>
       {goals.length === 0 ? (
-        <p className="text-sm text-muted-foreground p-4 bg-secondary/20 rounded-xl border border-border/50 text-center">
-          No goals set for this timeframe.
-        </p>
+        <EmptyState
+          icon={Target}
+          title={`No ${sectionTitle.toLowerCase()}`}
+          description="Create a new goal to start tracking progress."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {goals.map(goal => (
@@ -152,11 +156,11 @@ export default function MonthlyReview() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateGoalProgress(goal.id, Math.max(0, goal.current - 1))}
-                        className="w-7 h-7 rounded bg-secondary flex items-center justify-center font-bold hover:bg-secondary/80 transition-colors"
+                        className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center font-bold hover:bg-secondary/80 transition-colors active:scale-95"
                       >-</button>
                       <button
                         onClick={() => handleIncrement(goal)}
-                        className="w-7 h-7 rounded bg-primary/10 text-primary flex items-center justify-center font-bold hover:bg-primary hover:text-primary-foreground transition-colors"
+                        className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold hover:bg-primary hover:text-primary-foreground transition-colors active:scale-95"
                       >+</button>
                     </div>
                   </div>
@@ -171,22 +175,19 @@ export default function MonthlyReview() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10 relative">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <Target className="w-8 h-8 text-primary" /> Goal Tracker
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">Monthly, Quarterly, and Annual Targets.</p>
-        </div>
-        <div className="flex items-center gap-3">
+      <PageHeader
+        icon={Target}
+        title="Goal Tracker"
+        subtitle="Monthly, Quarterly, and Annual Targets."
+        actions={
           <button
             onClick={openNewModal}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2 text-sm active:scale-95"
           >
             <Plus className="w-4 h-4" /> New Goal
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {renderGoalSection("Monthly Goals", activeMonthly, <Zap className="w-5 h-5 text-orange-500" />)}
       {renderGoalSection("Quarterly Goals", activeQuarterly, <Calendar className="w-5 h-5 text-blue-500" />)}

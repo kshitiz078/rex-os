@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import type { Project, ProjectTask } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
+import EmptyState from "../components/shared/EmptyState";
 
 function ProjectDetail({ project, onClose }: { project: Project; onClose: () => void }) {
   const { toggleProjectTask, addProjectTask, editProjectTask, deleteProjectTask, updateProject } = useAppContext();
@@ -318,22 +320,19 @@ export default function Projects() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 relative">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <FolderKanban className="w-8 h-8 text-primary" /> Projects
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">
-            {projects.filter(p => p.status !== 'Completed').length} active · {projects.length} total
-          </p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> New Project
-        </button>
-      </div>
+      <PageHeader
+        icon={FolderKanban}
+        title="Projects"
+        subtitle={`${projects.filter(p => p.status !== 'Completed').length} active · ${projects.length} total`}
+        actions={
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-bold shadow-lg hover:shadow-primary/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" /> New Project
+          </button>
+        }
+      />
 
       {/* Filters & Sort */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
@@ -353,7 +352,14 @@ export default function Projects() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {sorted.length === 0 ? (
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects found"
+          description="Create a new project to start organizing your work."
+        />
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {sorted.map(project => (
           <Card
             key={project.id}
@@ -427,6 +433,7 @@ export default function Projects() {
           </Card>
         ))}
       </div>
+      )}
 
       {/* New Project Modal */}
       {isModalOpen && (

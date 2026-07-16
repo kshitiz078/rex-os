@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, TrendingUp, Music, Play, CheckCircle2, Clock, Zap, Target, Download, Save, Sparkles, X, Plus, Edit3 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
+import PageHeader from "../components/shared/PageHeader";
 
 export default function WeeklyReview() {
   const { 
@@ -123,26 +124,25 @@ export default function WeeklyReview() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-            <BarChart2 className="w-8 h-8 text-primary" /> Weekly Review
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">Analyze your output. Adjust your trajectory.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-secondary/80 text-foreground rounded-lg font-bold text-sm hover:bg-secondary transition-colors border border-border">
-            <Download className="w-4 h-4" /> Export
-          </button>
-          <div className="bg-orange-500/10 border border-orange-500/20 px-6 py-2.5 rounded-full flex items-center gap-3">
-            <Zap className="w-5 h-5 text-orange-500" />
-            <span className="font-black text-orange-600">Streak: {weeklyReview.publishingStreak} Days</span>
+      <PageHeader
+        icon={BarChart2}
+        title="Weekly Review"
+        subtitle="Analyze your output. Adjust your trajectory."
+        actions={
+          <div className="flex items-center gap-3">
+            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-secondary/80 text-foreground rounded-lg font-bold text-sm hover:bg-secondary transition-all border border-border active:scale-95">
+              <Download className="w-4 h-4" /> Export
+            </button>
+            <div className="bg-orange-500/10 border border-orange-500/20 px-5 py-2 rounded-full flex items-center gap-2">
+              <Zap className="w-4 h-4 text-orange-500" />
+              <span className="font-black text-orange-600 text-sm">Streak: {weeklyReview.publishingStreak} Days</span>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {stats.map((s, i) => (
           <Card key={i} className="border-border/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
             <CardContent className="p-5">

@@ -7,7 +7,7 @@ import {
   Battery, BatteryMedium, BatteryLow
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
-// unused import removed
+import PageHeader from "../components/shared/PageHeader";
 
 const ENERGY_LEVELS = [
   { value: "High", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-500/10" },
@@ -170,36 +170,34 @@ export default function MissionControl() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            Mission Control
-          </h1>
-          <p className="text-muted-foreground mt-1 text-lg font-medium">Execute on today's highest leverage tasks.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Energy Level */}
-          <div className="flex items-center gap-1 bg-secondary/50 rounded-full border border-border p-1" title="Select your current energy level. Tasks matching this level will be highlighted below.">
-            {ENERGY_LEVELS.map(e => (
-              <button
-                key={e.value}
-                onClick={() => setEnergyLevel(e.value as any)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black transition-all ${energyLevel === e.value ? `${e.bg} ${e.color}` : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <e.icon className="w-3 h-3" />
-                {e.value}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setIsFocusMode(true)}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2.5 rounded-full font-black shadow-lg hover:shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <Zap className="w-4 h-4" /> Focus Mode
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Target}
+        title="Mission Control"
+        subtitle="Execute on today's highest leverage tasks."
+        actions={
+          <>
+            {/* Energy Level */}
+            <div className="flex items-center gap-1 bg-secondary/50 rounded-full border border-border p-1" title="Select your current energy level. Tasks matching this level will be highlighted below.">
+              {ENERGY_LEVELS.map(e => (
+                <button
+                  key={e.value}
+                  onClick={() => setEnergyLevel(e.value as any)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black transition-all ${energyLevel === e.value ? `${e.bg} ${e.color}` : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <e.icon className="w-3 h-3" />
+                  {e.value}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setIsFocusMode(true)}
+              className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-full font-black shadow-lg hover:shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+            >
+              <Zap className="w-4 h-4" /> Focus Mode
+            </button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
